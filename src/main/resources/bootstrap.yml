@@ -1,0 +1,9 @@
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:fd}
+  cloud:
+    zookeeper:
+      connect-string: ${REGISTER_HOST:localhost}:${REGISTER_PORT:2181}
+
+activiti:
+  database-schema-update: true
