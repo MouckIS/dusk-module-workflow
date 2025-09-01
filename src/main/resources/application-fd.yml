@@ -3,16 +3,16 @@ server:
 
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://192.168.105.105:5432/crux-workflow}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/crux}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:unitech}
+    password: ${SPRING_DATASOURCE_PASSWORD:Unitech2020}
   application:
     name: ${SPRING_APPLICATION_NAME:dusk-module-workflow}
   rabbitmq:
     is-enabled: ${SPRING_RABBITMQ_ISENABLED:false}
   flyway:
     enabled: false
-    table: flyway_schema_history_activiti
+    table: flyway_schema_history_workflow
 
 logging:
   level:
