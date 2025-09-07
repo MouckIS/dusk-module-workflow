@@ -3,13 +3,23 @@ server:
 
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/crux}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://wsl.com:5432/crux}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:Unitech2020}
-  application:
-    name: ${SPRING_APPLICATION_NAME:dusk-module-workflow}
+    password: ${SPRING_DATASOURCE_PASSWORD:DuskTech@postgre}
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${spring.cloud.nacos.server-addr:172.17.131.115:8848}
+        username: ${spring.cloud.nacos.username:nacos}
+        password: ${spring.cloud.nacos.password:dusk}
+        namespace: sit
+        group: services
   rabbitmq:
     is-enabled: ${SPRING_RABBITMQ_ISENABLED:false}
+    username: admin
+    password: DuskTech#mq
+    addresses: wsl.com
   flyway:
     enabled: false
     table: flyway_schema_history_workflow
@@ -23,7 +33,7 @@ dubbo:
     name: dubbo
     port: -1
   registry:
-    address: zookeeper://${spring.cloud.zookeeper.connect-string}
+    address: nacos://${spring.cloud.nacos.discovery.server-addr}?namespace=${spring.cloud.nacos.discovery.namespace}
   scan:
     base-packages: com.dusk.module.workflow.service
   consumer:
@@ -33,7 +43,7 @@ activiti:
   async-executor-activate: false
   check-process-definitions: false
 
-  #这是seata单机配置，不适合集群
+#这是seata单机配置，不适合集群
 seata:
   enabled: false
   service:

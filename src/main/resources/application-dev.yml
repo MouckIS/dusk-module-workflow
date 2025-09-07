@@ -6,8 +6,14 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://192.168.44.99:5432/crux-workflow}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:unitech}
-  application:
-    name: ${SPRING_APPLICATION_NAME:dusk-module-workflow}
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${spring.cloud.nacos.server-addr:172.17.131.115:8848}
+        username: ${spring.cloud.nacos.username:nacos}
+        password: ${spring.cloud.nacos.password:dusk}
+        namespace: dev
+        group: services
   rabbitmq:
     is-enabled: ${SPRING_RABBITMQ_ISENABLED:false}
   flyway:
@@ -23,7 +29,7 @@ dubbo:
     name: dubbo
     port: -1
   registry:
-    address: zookeeper://${spring.cloud.zookeeper.connect-string}
+    address: nacos://${spring.cloud.nacos.discovery.server-addr}?namespace=${spring.cloud.nacos.discovery.namespace}
   scan:
     base-packages: com.dusk.module.workflow.service
   consumer:
