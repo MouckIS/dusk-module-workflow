@@ -27,10 +27,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamReader;
+import jakarta.xml.stream.XMLInputFactory;
+import jakarta.xml.stream.XMLStreamReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -83,7 +84,7 @@ public class ModelServiceImpl implements IModelService {
         model.setTenantId(TenantContextHolder.getTenantId().toString());
 
         repositoryService.saveModel(model);
-        repositoryService.addModelEditorSource(model.getId(), editorNode.toString().getBytes("utf-8"));
+        repositoryService.addModelEditorSource(model.getId(), editorNode.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
@@ -193,7 +194,7 @@ public class ModelServiceImpl implements IModelService {
         XMLInputFactory xif = XMLInputFactory.newInstance();
         InputStreamReader isr = null;
         XMLStreamReader xtr = null;
-        isr = new InputStreamReader(is, "utf-8");
+        isr = new InputStreamReader(is, StandardCharsets.UTF_8);
         xtr = xif.createXMLStreamReader(isr);
         BpmnModel bpmnModel = new BpmnXMLConverter().convertToBpmnModel(xtr);
         // 处理异常
@@ -217,7 +218,7 @@ public class ModelServiceImpl implements IModelService {
         modelData.setTenantId(String.valueOf(TenantContextHolder.getTenantId()));
 
         repositoryService.saveModel(modelData);
-        repositoryService.addModelEditorSource(modelData.getId(), modelNode.toString().getBytes("utf-8"));
+        repositoryService.addModelEditorSource(modelData.getId(), modelNode.toString().getBytes(StandardCharsets.UTF_8));
 
         xtr.close();
         isr.close();

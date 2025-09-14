@@ -200,8 +200,8 @@ public class DbSqlSession implements Session {
      * regular {@link CheckedDeleteOperation}.
      */
     public class BulkDeleteOperation implements DeleteOperation {
-        private String statement;
-        private Object parameter;
+        private final String statement;
+        private final Object parameter;
 
         public BulkDeleteOperation(String statement, Object parameter) {
             this.statement = dbSqlSessionFactory.mapStatement(statement);
@@ -450,7 +450,7 @@ public class DbSqlSession implements Session {
         }
         String selectStatement = dbSqlSessionFactory.getSelectStatement(entityClass);
         selectStatement = dbSqlSessionFactory.mapStatement(selectStatement);
-        persistentObject = (T) sqlSession.selectOne(selectStatement, id);
+        persistentObject = sqlSession.selectOne(selectStatement, id);
         if (persistentObject == null) {
             return null;
         }
@@ -999,7 +999,7 @@ public class DbSqlSession implements Session {
 
     protected String getDbVersion() {
         String selectSchemaVersionStatement = dbSqlSessionFactory.mapStatement("selectDbSchemaVersion");
-        return (String) sqlSession.selectOne(selectSchemaVersionStatement);
+        return sqlSession.selectOne(selectSchemaVersionStatement);
     }
 
     public void dbSchemaCreate() {
@@ -1340,8 +1340,8 @@ public class DbSqlSession implements Session {
                         inOraclePlsqlBlock = true;
                         sqlStatement = addSqlStatementPiece(sqlStatement, line);
 
-                    } else if ((line.endsWith(";") && inOraclePlsqlBlock == false) ||
-                            (line.startsWith("/") && inOraclePlsqlBlock == true)) {
+                    } else if ((line.endsWith(";") && !inOraclePlsqlBlock) ||
+                            (line.startsWith("/") && inOraclePlsqlBlock)) {
 
                         if (inOraclePlsqlBlock) {
                             inOraclePlsqlBlock = false;
@@ -1438,9 +1438,7 @@ public class DbSqlSession implements Session {
             }
 
             // Message returned from Postgres
-            if (((exceptionMessage.indexOf("relation") != -1 || exceptionMessage.indexOf("table") != -1)) && (exceptionMessage.indexOf("does not exist") != -1)) {
-                return true;
-            }
+            return ((exceptionMessage.indexOf("relation") != -1 || exceptionMessage.indexOf("table") != -1)) && (exceptionMessage.indexOf("does not exist") != -1);
         }
         return false;
     }

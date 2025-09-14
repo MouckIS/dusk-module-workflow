@@ -40,7 +40,7 @@ public abstract class AbstractQuery<T extends Query<?,?>, U> extends ListQueryPa
     public static final String SORTORDER_ASC = "asc";
     public static final String SORTORDER_DESC = "desc";
 
-    private static enum ResultType {
+    private enum ResultType {
         LIST, LIST_PAGE, SINGLE_RESULT, COUNT
     }
 
@@ -56,7 +56,7 @@ public abstract class AbstractQuery<T extends Query<?,?>, U> extends ListQueryPa
 
     protected QueryProperty orderProperty;
 
-    public static enum NullHandlingOnOrder {
+    public enum NullHandlingOnOrder {
         NULLS_FIRST, NULLS_LAST
     }
 

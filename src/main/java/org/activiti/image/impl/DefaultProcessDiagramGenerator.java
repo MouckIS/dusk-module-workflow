@@ -331,8 +331,8 @@ public class DefaultProcessDiagramGenerator implements ProcessDiagramGenerator {
                 }
                 List<GraphicInfo> graphicInfoList = bpmnModel.getFlowLocationGraphicInfo(artifact.getId());
                 graphicInfoList = connectionPerfectionizer(processDiagramCanvas, bpmnModel, sourceElement, targetElement, graphicInfoList);
-                int xPoints[]= new int[graphicInfoList.size()];
-                int yPoints[]= new int[graphicInfoList.size()];
+                int[] xPoints = new int[graphicInfoList.size()];
+                int[] yPoints = new int[graphicInfoList.size()];
                 for (int i=1; i<graphicInfoList.size(); i++) {
                     GraphicInfo graphicInfo = graphicInfoList.get(i);
                     GraphicInfo previousGraphicInfo = graphicInfoList.get(i-1);
@@ -368,22 +368,22 @@ public class DefaultProcessDiagramGenerator implements ProcessDiagramGenerator {
     }
 
     public InputStream generateDiagram(BpmnModel bpmnModel, String imageType, List<String> highLightedActivities) {
-        return generateDiagram(bpmnModel, imageType, highLightedActivities, Collections.<String>emptyList());
+        return generateDiagram(bpmnModel, imageType, highLightedActivities, Collections.emptyList());
     }
 
     public InputStream generateDiagram(BpmnModel bpmnModel, String imageType, List<String> highLightedActivities, double scaleFactor) {
-        return generateDiagram(bpmnModel, imageType, highLightedActivities, Collections.<String>emptyList(), scaleFactor);
+        return generateDiagram(bpmnModel, imageType, highLightedActivities, Collections.emptyList(), scaleFactor);
     }
 
     public InputStream generateDiagram(BpmnModel bpmnModel, String imageType, String activityFontName, String labelFontName, String annotationFontName, ClassLoader customClassLoader) {
-        return generateDiagram(bpmnModel, imageType, Collections.<String>emptyList(), Collections.<String>emptyList(),
+        return generateDiagram(bpmnModel, imageType, Collections.emptyList(), Collections.emptyList(),
                 activityFontName, labelFontName, annotationFontName, customClassLoader, 1.0);
     }
 
     public InputStream generateDiagram(BpmnModel bpmnModel, String imageType, String activityFontName,
                                        String labelFontName, String annotationFontName, ClassLoader customClassLoader, double scaleFactor) {
 
-        return generateDiagram(bpmnModel, imageType, Collections.<String>emptyList(), Collections.<String>emptyList(),
+        return generateDiagram(bpmnModel, imageType, Collections.emptyList(), Collections.emptyList(),
                 activityFontName, labelFontName, annotationFontName, customClassLoader, scaleFactor);
     }
 
@@ -392,7 +392,7 @@ public class DefaultProcessDiagramGenerator implements ProcessDiagramGenerator {
     }
 
     public InputStream generatePngDiagram(BpmnModel bpmnModel, double scaleFactor) {
-        return generateDiagram(bpmnModel, "png", Collections.<String>emptyList(), Collections.<String>emptyList(), scaleFactor);
+        return generateDiagram(bpmnModel, "png", Collections.emptyList(), Collections.emptyList(), scaleFactor);
     }
 
     public InputStream generateJpgDiagram(BpmnModel bpmnModel) {
@@ -400,7 +400,7 @@ public class DefaultProcessDiagramGenerator implements ProcessDiagramGenerator {
     }
 
     public InputStream generateJpgDiagram(BpmnModel bpmnModel, double scaleFactor) {
-        return generateDiagram(bpmnModel, "jpg", Collections.<String>emptyList(), Collections.<String>emptyList());
+        return generateDiagram(bpmnModel, "jpg", Collections.emptyList(), Collections.emptyList());
     }
 
     public BufferedImage generateImage(BpmnModel bpmnModel, String imageType, List<String> highLightedActivities, List<String> highLightedFlows,
@@ -417,7 +417,7 @@ public class DefaultProcessDiagramGenerator implements ProcessDiagramGenerator {
     }
 
     public BufferedImage generatePngImage(BpmnModel bpmnModel, double scaleFactor) {
-        return generateImage(bpmnModel, "png", Collections.<String>emptyList(), Collections.<String>emptyList(), scaleFactor);
+        return generateImage(bpmnModel, "png", Collections.emptyList(), Collections.emptyList(), scaleFactor);
     }
 
     protected DefaultProcessDiagramCanvas generateProcessDiagram(BpmnModel bpmnModel, String imageType,
@@ -582,10 +582,7 @@ public class DefaultProcessDiagramGenerator implements ProcessDiagramGenerator {
                 defaultFlow = ((Gateway) flowNode).getDefaultFlow();
             }
 
-            boolean isDefault = false;
-            if (defaultFlow != null && defaultFlow.equalsIgnoreCase(sequenceFlow.getId())) {
-                isDefault = true;
-            }
+            boolean isDefault = defaultFlow != null && defaultFlow.equalsIgnoreCase(sequenceFlow.getId());
             boolean drawConditionalIndicator = sequenceFlow.getConditionExpression() != null && !(flowNode instanceof Gateway);
 
             String sourceRef = sequenceFlow.getSourceRef();
@@ -595,8 +592,8 @@ public class DefaultProcessDiagramGenerator implements ProcessDiagramGenerator {
             List<GraphicInfo> graphicInfoList = bpmnModel.getFlowLocationGraphicInfo(sequenceFlow.getId());
             if (graphicInfoList != null && graphicInfoList.size() > 0) {
                 graphicInfoList = connectionPerfectionizer(processDiagramCanvas, bpmnModel, sourceElement, targetElement, graphicInfoList);
-                int xPoints[]= new int[graphicInfoList.size()];
-                int yPoints[]= new int[graphicInfoList.size()];
+                int[] xPoints = new int[graphicInfoList.size()];
+                int[] yPoints = new int[graphicInfoList.size()];
 
                 for (int i=1; i<graphicInfoList.size(); i++) {
                     GraphicInfo graphicInfo = graphicInfoList.get(i);
@@ -678,8 +675,8 @@ public class DefaultProcessDiagramGenerator implements ProcessDiagramGenerator {
     protected static GraphicInfo getLineCenter(List<GraphicInfo> graphicInfoList) {
         GraphicInfo gi = new GraphicInfo();
 
-        int xPoints[]= new int[graphicInfoList.size()];
-        int yPoints[]= new int[graphicInfoList.size()];
+        int[] xPoints = new int[graphicInfoList.size()];
+        int[] yPoints = new int[graphicInfoList.size()];
 
         double length = 0;
         double[] lengths = new double[graphicInfoList.size()];

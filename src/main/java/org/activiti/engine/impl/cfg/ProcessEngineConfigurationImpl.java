@@ -36,9 +36,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import javax.naming.InitialContext;
-import javax.sql.DataSource;
-import javax.xml.namespace.QName;
+import jakarta.naming.InitialContext;
+import jakarta.sql.DataSource;
+import jakarta.xml.namespace.QName;
 
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.engine.ActivitiException;
@@ -253,7 +253,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfiguration {
 
-    private static Logger log = LoggerFactory.getLogger(ProcessEngineConfigurationImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(ProcessEngineConfigurationImpl.class);
 
     public static final int DEFAULT_GENERIC_MAX_LENGTH_STRING= 4000;
     public static final int DEFAULT_ORACLE_MAX_LENGTH_STRING= 2000;
@@ -785,7 +785,7 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
                 if (jdbcMaxWaitTime > 0) {
                     pooledDataSource.setPoolTimeToWait(jdbcMaxWaitTime);
                 }
-                if (jdbcPingEnabled == true) {
+                if (jdbcPingEnabled) {
                     pooledDataSource.setPoolPingEnabled(true);
                     if (jdbcPingQuery != null) {
                         pooledDataSource.setPoolPingQuery(jdbcPingQuery);
@@ -1306,7 +1306,7 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
                         supportedTypes.append(" ").append(type.getCanonicalName()).append(" ");
                     }
                     throw new ActivitiException("The default BPMN parse handlers should only support one type, but " + defaultBpmnParseHandler.getClass()
-                            + " supports " + supportedTypes.toString() + ". This is likely a programmatic error");
+                            + " supports " + supportedTypes + ". This is likely a programmatic error");
                 } else {
                     Class<?> handledType = defaultBpmnParseHandler.getHandledTypes().iterator().next();
                     if (customParseHandlerMap.containsKey(handledType)) {
@@ -1381,7 +1381,7 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
     // job executor /////////////////////////////////////////////////////////////
 
     protected void initJobExecutor() {
-        if (isAsyncExecutorEnabled() == false) {
+        if (!isAsyncExecutorEnabled()) {
             if (jobExecutor == null) {
                 jobExecutor = new DefaultJobExecutor();
             }
@@ -1533,7 +1533,7 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
 
     protected int getMaxLengthString() {
         if (maxLengthStringVariableType == -1) {
-            if ("oracle".equalsIgnoreCase(databaseType) == true) {
+            if ("oracle".equalsIgnoreCase(databaseType)) {
                 return DEFAULT_ORACLE_MAX_LENGTH_STRING;
             } else {
                 return DEFAULT_GENERIC_MAX_LENGTH_STRING;

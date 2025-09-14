@@ -236,7 +236,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
                     relatedTask.forEach(p -> {
                         assignees.addAll(getFormKeyAssignee(p.getFormKey()));
                     });
-                    dto.setHasPermission(userInfo == null ? false : hasTaskPermission(assignees, userInfo));
+                    dto.setHasPermission(userInfo != null && hasTaskPermission(assignees, userInfo));
                     String taskName = ArrayUtil.join(relatedTask.stream().map(TaskInfo::getName).distinct().collect(toList()).toArray(), "/");
                     dto.setTaskName(taskName);
                     Task task = relatedTask.get(0);//默认只有一个节点
@@ -1003,10 +1003,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
                             // 判断el表达式是否成立
                             //写死判断不是flag的表达式则跳过
                             if (conditionText != null && processVariables != null) {
-                                condition = false;
-                                if (isCondition(StrUtil.trim(conditionText.toString()), processVariables)) {
-                                    condition = true;
-                                }
+                                condition = isCondition(StrUtil.trim(conditionText.toString()), processVariables);
                             }
                             if (condition) {
                                 workflowTaskDto.setTaskDirection("to");
@@ -1063,10 +1060,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
                             // 判断el表达式是否成立
                             //写死判断不是flag的表达式则跳过
                             if (conditionText != null && processVariables != null) {
-                                condition = false;
-                                if (isCondition(StrUtil.trim(conditionText.toString()), processVariables)) {
-                                    condition = true;
-                                }
+                                condition = isCondition(StrUtil.trim(conditionText.toString()), processVariables);
                             }
                             if (condition) {
                                 nodeInfo.setTaskDirection("to");
@@ -1095,10 +1089,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
                     // 判断el表达式是否成立
                     //写死判断不是flag的表达式则跳过
                     if (conditionText != null && processVariables != null) {
-                        condition = false;
-                        if (isCondition(StrUtil.trim(conditionText.toString()), processVariables)) {
-                            condition = true;
-                        }
+                        condition = isCondition(StrUtil.trim(conditionText.toString()), processVariables);
                     }
                     if (condition) {
                         nodeList.add(endNode);
@@ -1398,16 +1389,13 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
                     return false;
                 }
                 //当前节点审批过，并且撤回的节点是自己则不允许撤回
-                if (currTask.getTaskDefinitionKey().equals(historicTaskInstance.getTaskDefinitionKey())) {
-                    return false;
-                }
+                return !currTask.getTaskDefinitionKey().equals(historicTaskInstance.getTaskDefinitionKey());
             } else {
                 return false;
             }
         } else {
             return false;
         }
-        return true;
     }
 
     private List<HistoricTaskInstance> getHistoricTaskInstanceDesc(String processInstanceId) {
