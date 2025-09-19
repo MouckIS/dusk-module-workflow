@@ -17,8 +17,6 @@
     </parent>
 
     <properties>
-        <!--        crux依赖-->
-        <dusk-common.version>0.0.1-SNAPSHOT</dusk-common.version>
         <flyway.table>flyway_schema_history_workflow</flyway.table>
         <flyway.url>jdbc:postgresql://localhost:5432/crux</flyway.url>
         <flyway.user>postgres</flyway.user>
@@ -28,7 +26,6 @@
         <dependency>
             <groupId>com.dusk</groupId>
             <artifactId>dusk-common</artifactId>
-            <version>${dusk-common.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
