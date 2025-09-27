@@ -4,10 +4,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>dusk-module</groupId>
-    <artifactId>dusk-module-workflow</artifactId>
+    <artifactId>dusk-module-workflow-group</artifactId>
     <version>1.0.0</version>
-    <packaging>jar</packaging>
-    <name>dusk-module-workflow</name>
+    <packaging>pom</packaging>
+    <name>dusk-module-workflow-group</name>
+    <modules>
+        <module>dusk-module-workflow-shared</module>
+        <module>dusk-module-workflow</module>
+    </modules>
 
     <parent>
         <groupId>com.dusk</groupId>
@@ -15,41 +19,4 @@
         <version>0.0.1-SNAPSHOT</version>
         <relativePath/>
     </parent>
-
-    <properties>
-        <flyway.table>flyway_schema_history_workflow</flyway.table>
-        <flyway.url>jdbc:postgresql://localhost:5432/crux</flyway.url>
-        <flyway.user>postgres</flyway.user>
-        <flyway.password>Unitech2020</flyway.password>
-    </properties>
-    <dependencies>
-        <dependency>
-            <groupId>com.dusk</groupId>
-            <artifactId>dusk-common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.flowable</groupId>
-            <artifactId>flowable-spring-boot-starter-basic</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.flowable</groupId>
-            <artifactId>flowable-modeler</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>druid-spring-boot-starter</artifactId>
-        </dependency>
-
-    </dependencies>
 </project>

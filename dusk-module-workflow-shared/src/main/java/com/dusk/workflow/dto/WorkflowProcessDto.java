@@ -1,0 +1,89 @@
+package com.dusk.workflow.dto;
+
+import lombok.Data;
+
+import java.io.Serializable;
+import java.util.Map;
+
+/**
+ * @author kefuming
+ * @date 2020-07-22 14:42
+ */
+@Data
+public class WorkflowProcessDto implements Serializable {
+    /**
+     * 流程定义的key
+     */
+    private String processDefinitionKey;
+    /**
+     * 业务数据的主键
+     */
+    private String businessKey;
+    /**
+     * 动态参数，用于和流程交互
+     */
+    private Map<String, Object> variables;
+
+    //以下参数用于自动待办显示，并且可以在流程中更新
+
+    /**
+     * 待办显示的标题
+     */
+    private String title;
+
+    /**
+     * 待办显示的类型
+     */
+    private String typeName;
+
+    /**
+     * 待办的类型，前端用于判断跳转的
+     */
+    private String type;
+
+    /**
+     * 发起人 不填则使用当前登录人信息
+     */
+    private String starter;
+
+    /**
+     * 是否过滤场站
+     */
+    private boolean filterStation;
+
+    //以下是手机顶部推送配置
+    /**
+     * 是否自动推送手机顶部消息。默认不推送
+     */
+    private boolean autoAppPush = false;
+
+    /**
+     * 推送类型，默认是notice
+     */
+    private PushType pushType = PushType.NOTICE;
+
+    /**
+     * app推送标题，为空则用待办的类型
+     */
+    private String appTitle;
+
+    /**
+     * app推送正文，为空则用待办的title
+     */
+    private String appBody;
+
+    /**
+     * 推送级别 默认是info
+     */
+    private NoticationLevel noticationLevel = NoticationLevel.Info;
+
+    /**
+     * 顶部推送导航跳转参数
+     */
+    private Navigation navigation;
+
+    /**
+     * 业务数据
+     */
+    private Map<String, Object> businessData;
+}
