@@ -1,9 +1,9 @@
 package com.dusk.module.workflow.dto;
 
+import com.dusk.common.core.annotation.UserName;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldNameConstants;
-import com.dusk.common.core.annotation.UserName;
 
 /**
  * @author kefuming

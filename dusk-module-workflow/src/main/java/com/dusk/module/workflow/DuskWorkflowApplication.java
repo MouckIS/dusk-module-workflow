@@ -1,4 +1,4 @@
-package com.dusk.module.ddm.module.workflow;
+package com.dusk.module.workflow;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

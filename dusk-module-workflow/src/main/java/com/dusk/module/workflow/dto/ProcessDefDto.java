@@ -1,8 +1,8 @@
 package com.dusk.module.workflow.dto;
 
 import com.github.dozermapper.core.Mapping;
-import lombok.Data;
-import org.mapstruct.Mapper;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -10,7 +10,8 @@ import java.time.LocalDateTime;
  * @author kefuming
  * @date 2020-07-22 11:27
  */
-@Data
+@Getter
+@Setter
 public class ProcessDefDto {
     private String category;
     private String key;

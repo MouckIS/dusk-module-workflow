@@ -13,8 +13,8 @@
 
 package org.activiti.image.impl;
 
-import org.activiti.bpmn.model.Process;
 import org.activiti.bpmn.model.*;
+import org.activiti.bpmn.model.Process;
 import org.activiti.image.ProcessDiagramGenerator;
 
 import java.awt.image.BufferedImage;

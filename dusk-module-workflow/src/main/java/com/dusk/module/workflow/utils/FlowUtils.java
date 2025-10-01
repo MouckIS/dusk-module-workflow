@@ -1,14 +1,14 @@
-package com.dusk.workflow.utils;
+package com.dusk.module.workflow.utils;
+
 
 import cn.hutool.core.util.StrUtil;
-import com.dusk.common.core.flow.IProcessDesHolder;
-import com.dusk.common.module.activiti.dto.ProcessDesOutPutDto;
-import com.dusk.common.module.activiti.dto.WorkflowTaskDto;
-import com.dusk.common.module.activiti.service.IWorkFlowRpcService;
+import com.dusk.workflow.IProcessDesHolder;
+import com.dusk.workflow.dto.ProcessDesOutPutDto;
+import com.dusk.workflow.dto.WorkflowTaskDto;
+import com.dusk.workflow.service.IWorkFlowRpcService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.apache.dubbo.config.annotation.Reference;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ public class FlowUtils {
      * @param processDesList
      */
     public void setProcessDes(List<? extends IProcessDesHolder> processDesList) {
-        List<String> processIds = processDesList.stream().filter(e -> StrUtil.isNotBlank(e.getProcessInstanceId())).map(IProcessDesHolder::getProcessInstanceId).collect(Collectors.toList());
+        List<String> processIds = processDesList.stream().map(IProcessDesHolder::getProcessInstanceId).filter(StrUtil::isNotBlank).collect(Collectors.toList());
         if (processIds.isEmpty()) {
             return;
         }

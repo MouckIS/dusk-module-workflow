@@ -1,15 +1,18 @@
 package com.dusk.module.workflow.controller;
 
-import io.swagger.annotations.Api;
-import lombok.SneakyThrows;
 import com.dusk.common.core.controller.CruxBaseController;
 import com.dusk.common.core.dto.PagedAndSortedInputDto;
 import com.dusk.common.core.dto.PagedResultDto;
 import com.dusk.module.workflow.service.IActTaskService;
-import com.dusk.common.module.activiti.dto.WorkflowTaskDto;
+import com.dusk.workflow.dto.WorkflowTaskDto;
+import io.swagger.annotations.Api;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
