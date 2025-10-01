@@ -1,6 +1,7 @@
 package com.dusk.module.workflow.dto;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
 
@@ -8,7 +9,8 @@ import javax.validation.constraints.NotBlank;
  * @author kefuming
  * @date 2020-07-22 10:47
  */
-@Data
+@Getter
+@Setter
 public class ModelFormDto {
     private String category;
     @NotBlank(message = "流程名称不能为空")

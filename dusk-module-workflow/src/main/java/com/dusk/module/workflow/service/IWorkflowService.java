@@ -1,8 +1,8 @@
 package com.dusk.module.workflow.service;
 
-import com.dusk.common.module.activiti.dto.*;
-import com.dusk.common.module.activiti.service.IWorkFlowRpcService;
 import com.dusk.module.workflow.dto.RelatedNodeInfo;
+import com.dusk.workflow.dto.*;
+import com.dusk.workflow.service.IWorkFlowRpcService;
 
 import java.util.List;
 import java.util.Map;

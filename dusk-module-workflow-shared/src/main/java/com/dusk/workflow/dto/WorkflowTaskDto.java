@@ -2,6 +2,7 @@ package com.dusk.workflow.dto;
 
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
+import com.dusk.workflow.enums.AssigneeTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 

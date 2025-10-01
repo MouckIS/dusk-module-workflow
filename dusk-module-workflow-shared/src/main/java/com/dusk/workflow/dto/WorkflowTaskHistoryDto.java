@@ -1,5 +1,6 @@
 package com.dusk.workflow.dto;
 
+import com.dusk.common.core.annotation.UserName;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;

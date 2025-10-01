@@ -2,6 +2,7 @@ package com.dusk.workflow.service;
 
 
 import com.dusk.common.core.dto.SelectableApproverDto;
+import com.dusk.workflow.dto.WorkflowGetApproverInput;
 
 import java.util.Collections;
 import java.util.List;

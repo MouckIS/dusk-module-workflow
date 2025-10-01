@@ -1,6 +1,7 @@
-package com.dusk.module.ddm.module.workflow.dto;
+package com.dusk.module.workflow.dto;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -9,7 +10,8 @@ import java.time.LocalDateTime;
  * @author kefuming
  * @date 2020-07-22 10:07
  */
-@Data
+@Getter
+@Setter
 public class ModelDto implements Serializable {
     private String id;
     private String name;

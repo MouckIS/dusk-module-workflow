@@ -1,6 +1,11 @@
 package com.dusk.workflow.dto;
 
+import com.dusk.common.mqs.enums.NoticationLevel;
+import com.dusk.common.mqs.enums.PushType;
+import com.dusk.common.mqs.pusher.Navigation;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -9,7 +14,8 @@ import java.util.Map;
  * @author kefuming
  * @date 2020-07-22 14:42
  */
-@Data
+@Getter
+@Setter
 public class WorkflowProcessDto implements Serializable {
     /**
      * 流程定义的key

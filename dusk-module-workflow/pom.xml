@@ -2,12 +2,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>dusk-module</groupId>
-        <artifactId>dusk-module-workflow-group</artifactId>
-        <version>1.0.0</version>
+        <groupId>com.dusk</groupId>
+        <artifactId>dusk-module-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath/>
     </parent>
     <artifactId>dusk-module-workflow</artifactId>
-    <name>Archetype - dusk-module-workflow</name>
+    <name>dusk-module-workflow</name>
 
     <properties>
         <flyway.table>flyway_schema_history_workflow</flyway.table>
@@ -16,10 +17,6 @@
         <flyway.password>Unitech2020</flyway.password>
     </properties>
     <dependencies>
-        <dependency>
-            <groupId>com.dusk</groupId>
-            <artifactId>dusk-common</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -42,6 +39,19 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>druid-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dusk</groupId>
+            <artifactId>dusk-common-mqs</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.dusk</groupId>
+            <artifactId>dusk-module-workflow-shared</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dusk</groupId>
+            <artifactId>dusk-common-rpc</artifactId>
         </dependency>
 
     </dependencies>

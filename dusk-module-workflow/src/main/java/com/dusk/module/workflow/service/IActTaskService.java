@@ -2,7 +2,7 @@ package com.dusk.module.workflow.service;
 
 import com.dusk.common.core.dto.PagedAndSortedInputDto;
 import com.dusk.common.core.dto.PagedResultDto;
-import com.dusk.common.module.activiti.dto.WorkflowTaskDto;
+import com.dusk.workflow.dto.WorkflowTaskDto;
 
 /**
  * @author kefuming

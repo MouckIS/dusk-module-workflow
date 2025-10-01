@@ -1,8 +1,8 @@
 package com.dusk.workflow.dto;
 
-import com.dusk.common.core.pusher.Navigation;
-import com.dusk.common.core.pusher.NoticationLevel;
-import com.dusk.common.core.pusher.PushType;
+import com.dusk.common.mqs.enums.NoticationLevel;
+import com.dusk.common.mqs.enums.PushType;
+import com.dusk.common.mqs.pusher.Navigation;
 import lombok.Getter;
 import lombok.Setter;
 

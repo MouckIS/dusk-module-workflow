@@ -1,14 +1,16 @@
-package com.dusk.module.ddm.module.workflow.dto;
+package com.dusk.module.workflow.dto;
 
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
 import com.dusk.common.core.dto.PagedAndSortedInputDto;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author kefuming
  * @date 2020-07-22 10:24
  */
-@Data
+@Getter
+@Setter
 public class GetModelsInput extends PagedAndSortedInputDto {
 
     @ApiModelProperty("名称")

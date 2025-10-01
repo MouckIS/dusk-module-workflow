@@ -1,7 +1,7 @@
 package com.dusk.module.workflow.core.config;
 
-import org.activiti.engine.impl.cfg.IdGenerator;
 import com.dusk.common.core.jpa.Sequence;
+import org.activiti.engine.impl.cfg.IdGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

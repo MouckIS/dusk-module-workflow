@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 分级别异步文件日志输出配置 -->
+<configuration>
+    <!-- 日志模块 -->
+    <springProperty name="logModule" defaultValue="dusk-module-workflow" source="spring.application.name"/>
+    <include resource="conf/logback-base.xml"/>
+</configuration>
