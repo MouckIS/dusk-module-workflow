@@ -3,16 +3,17 @@ package com.dusk.module.workflow.controller;
 import com.dusk.common.core.controller.CruxBaseController;
 import com.dusk.common.core.exception.BusinessException;
 import com.dusk.common.core.tenant.TenantContextHolder;
-import com.dusk.common.module.activiti.dto.WorkflowTaskDetailDto;
-import com.dusk.common.module.activiti.dto.WorkflowTaskDto;
-import com.dusk.common.module.activiti.dto.WorkflowTaskHistoryDto;
 import com.dusk.module.workflow.dto.GetRelateNodeInput;
 import com.dusk.module.workflow.dto.GetRelateTaskInput;
 import com.dusk.module.workflow.dto.RelatedNodeInfo;
 import com.dusk.module.workflow.service.IWorkflowService;
+import com.dusk.workflow.dto.WorkflowTaskDetailDto;
+import com.dusk.workflow.dto.WorkflowTaskDto;
+import com.dusk.workflow.dto.WorkflowTaskHistoryDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.engine.ProcessEngineConfiguration;
 import org.activiti.engine.RepositoryService;
@@ -32,6 +33,7 @@ import java.util.List;
  * @author kefuming
  * @date 2020-11-16 16:23
  */
+@Slf4j
 @RestController
 @RequestMapping("/workflow")
 @Api(description = "工作流管理", tags = "Workflow")
@@ -106,7 +108,7 @@ public class WorkflowController extends CruxBaseController {
             os.flush();
             os.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("获取流程图片异常", e);
         }
     }
 
