@@ -1,4 +1,6 @@
 /target/
+/dusk-module-workflow/target
+/dusk-module-workflow-shared/target
 !.mvn/wrapper/maven-wrapper.jar
 
 ### STS ###
