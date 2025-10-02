@@ -1,0 +1,49 @@
+server:
+  port: ${SERVER_PORT:53199}
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://192.168.44.99:5432/crux-workflow}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:unitech}
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${spring.cloud.nacos.server-addr:localhost:8848}
+        username: ${spring.cloud.nacos.username:nacos}
+        password: ${spring.cloud.nacos.password:dusk}
+        namespace: dev
+        group: services
+  rabbitmq:
+    is-enabled: ${SPRING_RABBITMQ_ISENABLED:false}
+  flyway:
+    enabled: false
+    table: flyway_schema_history_workflow
+
+logging:
+  level:
+    org.orion: ${LOGGING_LEVEL_ORION:DEBUG}
+
+dubbo:
+  protocol:
+    name: dubbo
+    port: -1
+  registry:
+    address: nacos://${spring.cloud.nacos.discovery.server-addr}?namespace=${spring.cloud.nacos.discovery.namespace}
+  scan:
+    base-packages: com.dusk.module.workflow.service
+  consumer:
+    check: false
+
+activiti:
+  async-executor-activate: false
+  check-process-definitions: false
+
+  #这是seata单机配置，不适合集群
+seata:
+  enabled: false
+  service:
+    vgroup-mapping:
+      dusk-module-workflow-seata-service-group: default
+    grouplist:
+      default: localhost:8091
