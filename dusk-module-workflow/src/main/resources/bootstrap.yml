@@ -1,0 +1,8 @@
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:sit}
+  application:
+    name: ${SPRING_APPLICATION_NAME:dusk-module-workflow}
+
+activiti:
+  database-schema-update: true
