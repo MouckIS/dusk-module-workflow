@@ -5,7 +5,7 @@ import com.dusk.common.core.dto.PagedAndSortedInputDto;
 import com.dusk.common.core.dto.PagedResultDto;
 import com.dusk.module.workflow.service.IActTaskService;
 import com.dusk.workflow.dto.WorkflowTaskDto;
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -23,7 +23,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 @RestController
 @RequestMapping("/task")
-@Api(description = "任务管理", tags = "ActivitiTask")
+@Tag(name = "任务管理", description = "ActivitiTask")
 public class TaskController extends CruxBaseController {
     @Autowired
     IActTaskService actTaskService;

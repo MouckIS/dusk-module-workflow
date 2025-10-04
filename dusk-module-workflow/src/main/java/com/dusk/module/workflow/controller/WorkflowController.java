@@ -10,8 +10,8 @@ import com.dusk.module.workflow.service.IWorkflowService;
 import com.dusk.workflow.dto.WorkflowTaskDetailDto;
 import com.dusk.workflow.dto.WorkflowTaskDto;
 import com.dusk.workflow.dto.WorkflowTaskHistoryDto;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.activiti.bpmn.model.BpmnModel;
@@ -36,7 +36,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/workflow")
-@Api(description = "工作流管理", tags = "Workflow")
+@Tag(name = "工作流管理", description = "Workflow")
 public class WorkflowController extends CruxBaseController {
     @Autowired
     IWorkflowService workflowService;
@@ -48,7 +48,7 @@ public class WorkflowController extends CruxBaseController {
 
 
     @SneakyThrows
-    @ApiOperation(value = "根据流程id获取流程图")
+    @Operation(summary = "根据流程id获取流程图")
     @GetMapping(value = "/resource/{processId}")
     public void resourceRead(@PathVariable String processId, HttpServletResponse response) {
         byte[] data = workflowService.readResource(processId);
@@ -59,33 +59,33 @@ public class WorkflowController extends CruxBaseController {
         os.close();
     }
 
-    @ApiOperation(value = "获取流程历史记录")
+    @Operation(summary = "获取流程历史记录")
     @GetMapping(value = "/getTaskHistory/{processId}")
     public List<WorkflowTaskHistoryDto> getTaskHistory(@PathVariable String processId) {
         return workflowService.getTaskHistory(processId);
     }
 
-    @ApiOperation(value = "获取流程历史记录（多个流程id）")
+    @Operation(summary = "获取流程历史记录（多个流程id）")
     @GetMapping(value = "/getTaskHistories")
     public List<WorkflowTaskHistoryDto> getTaskHistories(@RequestParam(value = "processInstanceId") String[] processInstanceIds) {
         return workflowService.getTaskHistories(Arrays.asList(processInstanceIds));
     }
 
-    @ApiOperation(value = "判断当前流程当前是否允许撤回")
+    @Operation(summary = "判断当前流程当前是否允许撤回")
     @GetMapping(value = "/checkProcessCanRecallPre")
     public boolean checkProcessCanRecallPre(@RequestParam(value = "processInstanceId", required = true) String processInstanceId) {
         return workflowService.checkProcessCanRecallPre(processInstanceId);
     }
 
 
-    @ApiOperation(value = "撤回到上一节点")
+    @Operation(summary = "撤回到上一节点")
     @GetMapping(value = "/recallPre")
     public void recallPre(@RequestParam(value = "processInstanceId", required = true) String processInstanceId) {
         workflowService.recallPre(processInstanceId);
     }
 
 
-    @ApiOperation(value = "根据流程得key获取流程图")
+    @Operation(summary = "根据流程得key获取流程图")
     @GetMapping(value = "/getWorkFlowImgByProcessKey/{processKey}")
     public void getWorkFlowImgByProcessKey(HttpServletResponse response, @PathVariable String processKey) {
         ProcessDefinition pd = repositoryService.createProcessDefinitionQuery().processDefinitionTenantId(TenantContextHolder.getTenantId().toString()).processDefinitionKey(processKey).latestVersion().singleResult();
@@ -113,38 +113,38 @@ public class WorkflowController extends CruxBaseController {
     }
 
 
-    @ApiOperation(value = "根据运行实例,获取当前所有任务")
+    @Operation(summary = "根据运行实例,获取当前所有任务")
     @GetMapping("/getTasksByProcess")
     public List<WorkflowTaskDto> getTasksByProcess(@RequestParam("processInstanceId") String[] processInstanceIds) {
         return workflowService.getTasksByProcess(Arrays.asList(processInstanceIds));
     }
 
-    @ApiOperation(value = "根据运行实例,获取当前所有任务(不过滤权限，任何人都可以看到)")
+    @Operation(summary = "根据运行实例,获取当前所有任务(不过滤权限，任何人都可以看到)")
     @GetMapping("/getTasksByProcessWithoutAuth")
     public List<WorkflowTaskDto> getTasksByProcessWithoutAuth(@RequestParam("processInstanceId") String[] processInstanceIds) {
         return workflowService.getTasksByProcess(Arrays.asList(processInstanceIds), false);
     }
 
-    @ApiOperation(value = "根据运行实例,获取关联的节点任务")
+    @Operation(summary = "根据运行实例,获取关联的节点任务")
     @PostMapping("/getRelateTask")
     public List<WorkflowTaskDto> getRelateTask(@RequestBody GetRelateTaskInput input) {
         return workflowService.getRelateTask(input.getTaskId(), input.isAutoCalculate(), input.getVariables());
     }
 
 
-    @ApiOperation(value = "根据运行实例或者流程key,获取关联的节点信息")
+    @Operation(summary = "根据运行实例或者流程key,获取关联的节点信息")
     @PostMapping("/getRelateNode")
     public List<RelatedNodeInfo> getRelateNode(@RequestBody GetRelateNodeInput input) {
         return workflowService.getRelatedNode(input.getTaskId(), input.getProcessKey(), input.isAutoCalculate(), input.getVariables());
     }
 
-    @ApiOperation(value = "查询流程定义里第一个节点得formkey(startEvent的formKey)")
+    @Operation(summary = "查询流程定义里第一个节点得formkey(startEvent的formKey)")
     @PostMapping("/getProcessDefinitionFirstFormKey")
     public String getProcessDefinitionFirstFormKey(@RequestParam String processKey) {
         return workflowService.getProcessDefinitionFirstFormKey(processKey);
     }
 
-    @ApiOperation(value = "根据运行实例,获取当前任务包含待处理人的信息(不过滤权限，任何人都可以看到)")
+    @Operation(summary = "根据运行实例,获取当前任务包含待处理人的信息(不过滤权限，任何人都可以看到)")
     @GetMapping(value = "/getCurrTasksWithAssigneeInfos/{processId}")
     public List<WorkflowTaskDetailDto> getCurrTasksWithAssigneeInfos(@PathVariable String processId) {
         return workflowService.getCurrTasksWithAssigneeInfos(processId);
