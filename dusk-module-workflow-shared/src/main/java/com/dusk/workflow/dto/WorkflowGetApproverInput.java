@@ -1,6 +1,6 @@
 package com.dusk.workflow.dto;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,13 +14,13 @@ import java.io.Serializable;
 @Getter
 @Setter
 public class WorkflowGetApproverInput implements Serializable {
-    @ApiModelProperty("业务id")
+    @Schema(description = "业务id")
     @NotNull(message = "业务id不能为空")
     private Long businessId;
 
-    @ApiModelProperty("流程实例id")
+    @Schema(description = "流程实例id")
     private String processInstanceId;
 
-    @ApiModelProperty("流程节点的formKey")
+    @Schema(description = "流程节点的formKey")
     private String formKey;
 }

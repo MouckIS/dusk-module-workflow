@@ -1,7 +1,7 @@
 package com.dusk.module.workflow.dto;
 
 import com.dusk.common.core.dto.PagedAndSortedInputDto;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,6 +12,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class GetProcessesInput extends PagedAndSortedInputDto {
-    @ApiModelProperty("分类")
+    @Schema(description = "分类")
     private String category;
 }
