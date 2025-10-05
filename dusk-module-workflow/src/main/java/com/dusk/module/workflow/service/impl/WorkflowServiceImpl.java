@@ -1308,7 +1308,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
                     log.error("序列化对象异常", e);
                 }
                 if (StrUtil.isNotEmpty(p.getAssignee()) && addTodo) {
-                    String[] assignees = StrUtil.split(p.getAssignee(), ",");
+                    String[] assignees = StrUtil.split(p.getAssignee(), (int) ',');
                     ToDoDto toDoDto = new ToDoDto(type, typeName, title, state, toDoTargetType, assignees, businessId
                             , filterStation, extensions);
                     if (pushDto != null) {
