@@ -12,7 +12,7 @@
 
     <properties>
         <flyway.table>flyway_schema_history_workflow</flyway.table>
-        <flyway.url>jdbc:postgresql://localhost:5432/crux</flyway.url>
+        <flyway.url>jdbc:postgresql://dusk.com:5432/crux</flyway.url>
         <flyway.user>postgres</flyway.user>
         <flyway.password>Unitech2020</flyway.password>
     </properties>
@@ -53,6 +53,13 @@
             <groupId>com.dusk</groupId>
             <artifactId>dusk-common-rpc</artifactId>
         </dependency>
-
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 </project>
