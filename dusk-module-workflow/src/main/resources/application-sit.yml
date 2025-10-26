@@ -3,14 +3,14 @@ server:
 
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/crux}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://dusk.com:5432/crux}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:DuskTech@postgre}
 
   cloud:
     nacos:
       discovery:
-        server-addr: ${spring.cloud.nacos.server-addr:localhost:8848}
+        server-addr: ${spring.cloud.nacos.server-addr:dusk.com:8848}
         username: ${spring.cloud.nacos.username:nacos}
         password: ${spring.cloud.nacos.password:dusk}
         namespace: sit
