@@ -7,8 +7,8 @@ import com.dusk.module.workflow.authorization.ActivitiAuthProvider;
 import com.dusk.module.workflow.dto.GetProcessesInput;
 import com.dusk.module.workflow.dto.ProcessDefDto;
 import com.dusk.module.workflow.service.IProcessService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -23,18 +23,18 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 @RestController
 @RequestMapping("/process")
-@Api(description = "流程管理", tags = "Process")
+@Tag(description = "流程管理", name = "Process")
 public class ProcessController extends CruxBaseController {
     @Autowired
     IProcessService processService;
 
-    @ApiOperation("分页获取流程")
+    @Schema(description = "分页获取流程")
     @GetMapping
     public PagedResultDto<ProcessDefDto> list(GetProcessesInput input) {
         return processService.getProcesses(input);
     }
 
-    @ApiOperation("获取流程图片或者xml定义")
+    @Schema(description = "获取流程图片或者xml定义")
     @SneakyThrows
     @GetMapping(value = "/resource/{proInsId}/{resType}")
     public void resourceRead(@PathVariable String proInsId, @PathVariable String resType, HttpServletResponse response) {
@@ -53,7 +53,7 @@ public class ProcessController extends CruxBaseController {
         outputStream.close();
     }
 
-    @ApiOperation("删除流程实例")
+    @Schema(description = "删除流程实例")
     @DeleteMapping("/{deploymentId}")
     @Authorize(ActivitiAuthProvider.PAGES_ACTIVITI_PROCESS_DELETE)
     public void deleteProcIns(@PathVariable String deploymentId) {

@@ -1,6 +1,6 @@
 package com.dusk.workflow.dto;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,15 +15,15 @@ import java.util.Map;
 @Getter
 @Setter
 public class WorkflowCompleteTaskInputDto implements Serializable {
-    @ApiModelProperty("流程变量")
+    @Schema(description = "流程变量")
     protected Map<String, Object> variables = new HashMap<>();
 
-    @ApiModelProperty("流程局部变量")
+    @Schema(description = "流程局部变量")
     protected Map<String, Object> localVariables;
 
-    @ApiModelProperty(value = "是否通过, 默认true")
+    @Schema(description = "是否通过, 默认true")
     protected boolean pass = true;
 
-    @ApiModelProperty("审批备注")
+    @Schema(description = "审批备注")
     protected String comment;
 }
