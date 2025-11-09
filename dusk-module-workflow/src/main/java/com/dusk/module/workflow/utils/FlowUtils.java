@@ -8,7 +8,7 @@ import com.dusk.workflow.dto.WorkflowTaskDto;
 import com.dusk.workflow.service.IWorkFlowRpcService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
-import org.apache.dubbo.config.annotation.Reference;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  */
 @Component
 public class FlowUtils {
-    @Reference
+    @DubboReference
     private IWorkFlowRpcService workFlowRpcService;
     @Autowired
     private ObjectMapper objectMapper;
