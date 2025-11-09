@@ -12,6 +12,7 @@ public interface IProcessService {
 
     /**
      * 移除指定id的流程实例
+     *
      * @param deploymentId
      * @return
      */
@@ -19,6 +20,7 @@ public interface IProcessService {
 
     /**
      * 分页获取流程
+     *
      * @param input
      * @return
      */
@@ -27,9 +29,10 @@ public interface IProcessService {
 
     /**
      * 获取流程的图片定义或者xml定义
+     *
      * @param proInsId 流程id
-     * @param resType 类型
+     * @param resType  类型
      * @return
      */
-    byte[] getResource(String proInsId,String resType);
+    byte[] getResource(String proInsId, String resType);
 }

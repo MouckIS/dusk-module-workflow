@@ -38,12 +38,12 @@ public class ModelController extends CruxBaseController {
         return modelService.getModels(input);
     }
 
-//    @Authorize(ActivitiAuthProvider.PAGES_ACTIVITI_MODEL_DELETE)
-//    @Schema(description = "删除指定模型")
-//    @DeleteMapping("/removeModelById/{id}")
-//    public void removeModelById(@PathVariable("id") String id) {
-//        modelService.removeModelById(id);
-//    }
+    //    @Authorize(ActivitiAuthProvider.PAGES_ACTIVITI_MODEL_DELETE)
+    //    @Schema(description = "删除指定模型")
+    //    @DeleteMapping("/removeModelById/{id}")
+    //    public void removeModelById(@PathVariable("id") String id) {
+    //        modelService.removeModelById(id);
+    //    }
 
     @Authorize(ActivitiAuthProvider.PAGES_ACTIVITI_MODEL_DELETE)
     @Schema(description = "回退指定模型的版本")

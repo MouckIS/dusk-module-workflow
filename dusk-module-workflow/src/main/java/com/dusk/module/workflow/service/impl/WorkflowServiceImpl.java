@@ -4,28 +4,27 @@ import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
+import com.dusk.common.core.auth.authentication.LoginUserIdContextHolder;
+import com.dusk.common.core.exception.BusinessException;
+import com.dusk.common.core.model.UserContext;
+import com.dusk.common.core.tenant.TenantContextHolder;
+import com.dusk.common.core.utils.DateUtils;
+import com.dusk.common.core.utils.MapperUtil;
+import com.dusk.common.core.utils.SecurityUtils;
 import com.dusk.common.rpc.auth.UserNameUtils;
 import com.dusk.common.rpc.auth.dto.ToDoDto;
 import com.dusk.common.rpc.auth.dto.UserFullListDto;
 import com.dusk.common.rpc.auth.enums.ToDoTargetType;
 import com.dusk.common.rpc.auth.service.ITodoRpcService;
 import com.dusk.common.rpc.auth.service.IUserRpcService;
-import com.dusk.common.core.auth.authentication.LoginUserIdContextHolder;
-import com.dusk.common.core.exception.BusinessException;
-import com.dusk.common.core.model.UserContext;
-import com.dusk.common.core.tenant.TenantContextHolder;
-import com.dusk.common.core.utils.DateUtils;
-import com.dusk.common.core.utils.DozerUtils;
-import com.dusk.common.core.utils.SecurityUtils;
 import com.dusk.module.workflow.constant.ActivitiConstants;
 import com.dusk.module.workflow.dto.*;
+import com.dusk.module.workflow.mapper.WorkflowMapper;
 import com.dusk.module.workflow.service.IWorkflowService;
 import com.dusk.workflow.dto.*;
 import com.dusk.workflow.enums.AssigneeTypeEnum;
-import com.dusk.workflow.service.IWorkFlowRpcService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.dozermapper.core.Mapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.activiti.bpmn.model.BpmnModel;
@@ -56,10 +55,10 @@ import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.*;
 import org.activiti.image.ProcessDiagramGenerator;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.dubbo.config.annotation.Reference;
-import org.apache.dubbo.config.annotation.Service;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
@@ -72,38 +71,33 @@ import static java.util.stream.Collectors.toList;
  * @author kefuming
  * @date 2020-07-22 16:15
  */
-//显示配置dubbo provider 禁止consumer重试，超时时长为2秒
-@Service(retries = 0, timeout = 3500)
+@Service
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
-public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowService {
+public class WorkflowServiceImpl implements IWorkflowService {
     private static final String BOHUI = "驳回";
     private static final String CHEHUI = "撤回";
-
+    private final WorkflowMapper mapper = WorkflowMapper.INSTANCE;
     @Autowired
-    RuntimeService runtimeService;
+    private RuntimeService runtimeService;
     @Autowired
-    TaskService taskService;
+    private TaskService taskService;
     @Autowired
-    RepositoryService repositoryService;
+    private RepositoryService repositoryService;
     @Autowired
-    ProcessEngineConfiguration processEngineConfiguration;
+    private ProcessEngineConfiguration processEngineConfiguration;
     @Autowired
-    HistoryService historyService;
+    private HistoryService historyService;
     @Autowired
-    FormService formService;
+    private FormService formService;
+    @DubboReference(timeout = 1500)
+    private IUserRpcService userRpcService;
     @Autowired
-    Mapper dozerMapper;
-    @Reference(timeout = 1500)
-    IUserRpcService userRpcService;
+    private SecurityUtils securityUtils;
     @Autowired
-    SecurityUtils securityUtils;
-    @Autowired
-    UserNameUtils userNameUtils;
-    @Reference
-    ITodoRpcService todoRpcService;
-    @Autowired
-    ObjectMapper mapper;
+    private UserNameUtils userNameUtils;
+    @DubboReference
+    private ITodoRpcService todoRpcService;
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -118,7 +112,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
         List<WorkflowTaskDto> tasksByProcess = getTasksByProcessAndInitAssignee(params, false);
         result.setTaskInfos(tasksByProcess);
         //同步待办
-        syncTodos(processInstance, tasksByProcess, dozerMapper.map(workflowProcessDto, AppPushDto.class), workflowProcessDto.getBusinessData());
+        syncTodos(processInstance, tasksByProcess, mapper.workflowProcessDtoToAppPushDto(workflowProcessDto), workflowProcessDto.getBusinessData());
         //处理代办
         return result;
     }
@@ -170,7 +164,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
             activeActivityIds = runtimeService.getActiveActivityIds(processInstanceId);
         }
 
-        if (activeActivityIds.size() == 0) {
+        if (activeActivityIds.isEmpty()) {
             activeActivityIds
                     .add(historyService.createHistoricActivityInstanceQuery().processInstanceId(processInstanceId).activityType("endEvent").singleResult().getActivityId());
         }
@@ -216,7 +210,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
                 ProcessDesOutPutDto dto = new ProcessDesOutPutDto();
                 dto.setProcessInstanceId(processId);
                 List<Task> relatedTask = collect.stream().filter(p -> p.getProcessInstanceId().equals(processId)).collect(toList());
-                if (relatedTask.size() > 0) {
+                if (!relatedTask.isEmpty()) {
                     Map<String, Object> variables = runtimeService.getVariables(processId);
                     dto.setVariables(variables);
                     List<String> assignees = relatedTask.stream().filter(e -> StrUtil.isNotEmpty(e.getAssignee())).map(TaskInfo::getAssignee).collect(toList());
@@ -235,10 +229,10 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
                     relatedTask.forEach(p -> {
                         assignees.addAll(getFormKeyAssignee(p.getFormKey()));
                     });
-                    dto.setHasPermission(userInfo == null ? false : hasTaskPermission(assignees, userInfo));
-                    String taskName = ArrayUtil.join(relatedTask.stream().map(TaskInfo::getName).distinct().collect(toList()).toArray(), "/");
+                    dto.setHasPermission(userInfo != null && hasTaskPermission(assignees, userInfo));
+                    String taskName = ArrayUtil.join(relatedTask.stream().map(TaskInfo::getName).distinct().toList().toArray(), "/");
                     dto.setTaskName(taskName);
-                    Task task = relatedTask.get(0);//默认只有一个节点
+                    Task task = relatedTask.getFirst();//默认只有一个节点
                     dto.setFormKey(task.getFormKey());
                 } else {
                     dto.setFinished(true);
@@ -250,8 +244,8 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
             for (ProcessDesOutPutDto item : data) {
                 if (!item.isFinished()) {
                     List<String> temp = userNameDtos.stream().filter(p -> p.getProcessInstanceId().equals(item.getProcessInstanceId())).map(p -> p.getAssigneeName())
-                            .collect(toList());
-                    if (temp.size() > 0) {
+                            .toList();
+                    if (!temp.isEmpty()) {
                         item.setDescription(StrUtil.format("待【{}】{}", ArrayUtil.join(temp.stream().distinct().toArray(), "，"), item.getTaskName()));
                     } else {
                         item.setDescription(item.getTaskName());
@@ -288,9 +282,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
         }
 
         if (processDefinition.getHasStartFormKey()) {
-            String expressionText =
-                    ((DefaultStartFormHandler) processDefinition.getStartFormHandler()).getFormKey().getExpressionText();
-            return expressionText;
+            return ((DefaultStartFormHandler) processDefinition.getStartFormHandler()).getFormKey().getExpressionText();
         }
         return null;
     }
@@ -307,7 +299,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
         //同步待办
         List<String> params = new ArrayList<>();
         params.add(input.getProcessInstanceId());
-        syncTodos(processInstance, getTasksByProcessAndInitAssignee(params, false), dozerMapper.map(input, AppPushDto.class), input.getBusinessData());
+        syncTodos(processInstance, getTasksByProcessAndInitAssignee(params, false), mapper.completeTaskByProcessIdInputDtoToAppPushDto(input), input.getBusinessData());
         return result;
     }
 
@@ -337,7 +329,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
                 }
             }
         }
-//        taskService.setAssignee(taskId, securityUtils.getCurrentUser().getId().toString());
+        //        taskService.setAssignee(taskId, securityUtils.getCurrentUser().getId().toString());
         //modify by pengjian 支持不登陆执行
         taskService.setAssignee(taskId, LoginUserIdContextHolder.getUserId() == null ? "" :
                 LoginUserIdContextHolder.getUserId().toString());
@@ -375,7 +367,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
         task.setAssignee(input.getAssignee());
         taskService.saveTask(task);
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(task.getProcessInstanceId()).singleResult();
-        syncTodosAssigneeChanged(processInstance, toTaskDto(Collections.singletonList(task), false), dozerMapper.map(input, AppPushDto.class), input.getBusinessData());
+        syncTodosAssigneeChanged(processInstance, toTaskDto(Collections.singletonList(task), false), mapper.updateTaskAssigneeInputToAppPushDto(input), input.getBusinessData());
     }
 
     @Override
@@ -581,9 +573,9 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
         List<WorkflowTaskDto> taskList = getTasksByProcess(new ArrayList<>() {{
             add(processInstanceId);
         }}, false);
-        List<WorkflowTaskDetailDto> result = DozerUtils.mapList(dozerMapper, taskList, WorkflowTaskDetailDto.class);
+        List<WorkflowTaskDetailDto> result = MapperUtil.mapList(taskList, mapper::workflowTaskDtoToWorkflowTaskDetailDto);
         List<UserNameDto> userNameList = new ArrayList<>();
-        if (result.size() > 0) {
+        if (!result.isEmpty()) {
             for (WorkflowTaskDetailDto task : result) {
                 String assigneeStr = task.getAssignee();
                 List<String> roleNames = new ArrayList<>();
@@ -605,9 +597,9 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
         List<UserNameDto> userNameDtos = userNameUtils.mapList(userNameList, UserNameDto.class);
         for (WorkflowTaskDetailDto item : result) {
             List<String> userNames = userNameDtos.stream().filter(p -> p.getProcessInstanceId().equals(item.getId()))
-                    .map(UserNameDto::getAssigneeName).collect(toList());
+                    .map(UserNameDto::getAssigneeName).toList();
 
-            if (userNames.size() > 0) {
+            if (!userNames.isEmpty()) {
                 item.setUserNames(userNames.stream().distinct().collect(Collectors.joining(",")));
             }
         }
@@ -631,20 +623,20 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
         if (!checkProcessCanRecallPre(historicTaskInstanceDesc, processDefinitionEntity, userTasks)) {
             throw new BusinessException("当前节点无法撤回");
         }
-        ActivityImpl gotoActivity = processDefinitionEntity.findActivity(historicTaskInstanceDesc.get(0).getTaskDefinitionKey());
-        ActivityImpl currActivity = processDefinitionEntity.findActivity(userTasks.get(0).getTaskDefinitionKey());
-        gotoAssignActivity(userTasks.get(0), currActivity, gotoActivity, CHEHUI);
+        ActivityImpl gotoActivity = processDefinitionEntity.findActivity(historicTaskInstanceDesc.getFirst().getTaskDefinitionKey());
+        ActivityImpl currActivity = processDefinitionEntity.findActivity(userTasks.getFirst().getTaskDefinitionKey());
+        gotoAssignActivity(userTasks.getFirst(), currActivity, gotoActivity, CHEHUI);
         //删除历史记录
-        historyService.deleteHistoricTaskInstance(historicTaskInstanceDesc.get(0).getId());
-        historyService.deleteHistoricTaskInstance(userTasks.get(0).getId());
+        historyService.deleteHistoricTaskInstance(historicTaskInstanceDesc.getFirst().getId());
+        historyService.deleteHistoricTaskInstance(userTasks.getFirst().getId());
     }
 
 
     @Override
     public StartProcessOutDto startProcessAndCompleteFirst(StartProcessInputDto input) {
-        WorkflowProcessDto processDto = dozerMapper.map(input, WorkflowProcessDto.class);
+        WorkflowProcessDto processDto = mapper.inputDtoToWorkflowProcessDto(input);
         String processId = startNewProcess(processDto).getId();
-        CompleteTaskByProcessIdInputDto taskDto = dozerMapper.map(input, CompleteTaskByProcessIdInputDto.class);
+        CompleteTaskByProcessIdInputDto taskDto = mapper.inputDtoToCompleteTaskByProcessIdInputDto(input);
         taskDto.setProcessInstanceId(processId);
         completeTaskByProcessId(taskDto);
         StartProcessOutDto result = new StartProcessOutDto();
@@ -686,7 +678,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
             variables.put(ActivitiConstants.BUSINESS_TYPE, input.getType());
         }
         if (input.getFilterStation() != null) {
-            variables.put(ActivitiConstants.FILTER_STATION, input.getFilterStation().booleanValue());
+            variables.put(ActivitiConstants.FILTER_STATION, input.getFilterStation());
         }
         if (StrUtil.isNotEmpty(input.getStarter())) {
             variables.put(ActivitiConstants.STARTER, input.getStarter());
@@ -697,7 +689,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
         List<String> params = new ArrayList<>();
         params.add(input.getProcessInstanceId());
         List<WorkflowTaskDto> tasksByProcess = getTasksByProcessAndInitAssignee(params, false);
-        syncTodos(processInstance, tasksByProcess, dozerMapper.map(input, AppPushDto.class), input.getBusinessData());
+        syncTodos(processInstance, tasksByProcess, mapper.completeTaskInputDtoToAppPushDto(input), input.getBusinessData());
         return tasksByProcess;
     }
 
@@ -773,8 +765,8 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
             }
         }
         //更新待办
-        if (updatedTasks.size() > 0) {
-            syncTodosAssigneeChanged(processInstance, toTaskDto(updatedTasks, false), dozerMapper.map(input, AppPushDto.class), input.getBusinessData());
+        if (!updatedTasks.isEmpty()) {
+            syncTodosAssigneeChanged(processInstance, toTaskDto(updatedTasks, false), mapper.updateFlowVariablesInputToAppPushDto(input), input.getBusinessData());
         }
     }
 
@@ -796,7 +788,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
             throw new RuntimeException("进程实例ID无法查询到关联的任务...");
         }
         if (list.size() == 1) {
-            return list.get(0).getId();
+            return list.getFirst().getId();
         } else {
             throw new RuntimeException("当前进程实例有多个任务在运行中...");
         }
@@ -904,7 +896,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
                     List<PvmTransition> outTransitionsTemp = destination.getOutgoingTransitions();
                     // 如果排他网关只有一条线路信息
                     if (outTransitionsTemp.size() == 1) {
-                        return nextTaskDefinition((ActivityImpl) outTransitionsTemp.get(0).getDestination(),
+                        return nextTaskDefinition((ActivityImpl) outTransitionsTemp.getFirst().getDestination(),
                                 activityId, variables);
                     } else if (outTransitionsTemp.size() > 1) { // 如果排他网关有多条线路信息
                         for (PvmTransition outTransition : outTransitionsTemp) {
@@ -976,7 +968,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
 
     //计算关联节点
     private void caculateLinkTask(List<PvmTransition> outgoingTransitions, List<WorkflowTaskDto> taskList, Map<String
-            , Object> processVariables, boolean autoCalculate,
+                                          , Object> processVariables, boolean autoCalculate,
                                   String defaultFlowId) {
         WorkflowTaskDto defaultWorkflow = null;
         // 找到当前节点关联的节点
@@ -1026,7 +1018,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
             }
         }
         if (autoCalculate && StringUtils.isNotEmpty(defaultFlowId) && defaultWorkflow != null) {
-            if (!taskList.stream().anyMatch(t -> t.getTaskDirection().equals("to"))) {
+            if (taskList.stream().noneMatch(t -> t.getTaskDirection().equals("to"))) {
                 taskList.add(defaultWorkflow);
             }
         }
@@ -1036,7 +1028,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
 
     //计算关联节点
     private void caculateLinkNode(List<PvmTransition> outgoingTransitions, List<RelatedNodeInfo> nodeList, Map<String
-            , Object> processVariables, boolean autoCalculate,
+                                          , Object> processVariables, boolean autoCalculate,
                                   String defaultFlowId) {
         RelatedNodeInfo defaultWorkflow = null;
         // 找到当前节点关联的节点
@@ -1062,10 +1054,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
                             // 判断el表达式是否成立
                             //写死判断不是flag的表达式则跳过
                             if (conditionText != null && processVariables != null) {
-                                condition = false;
-                                if (isCondition(StrUtil.trim(conditionText.toString()), processVariables)) {
-                                    condition = true;
-                                }
+                                condition = isCondition(StrUtil.trim(conditionText.toString()), processVariables);
                             }
                             if (condition) {
                                 nodeInfo.setTaskDirection("to");
@@ -1109,7 +1098,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
 
         }
         if (autoCalculate && StringUtils.isNotEmpty(defaultFlowId) && defaultWorkflow != null) {
-            if (!nodeList.stream().anyMatch(t -> t.getTaskDirection().equals("to"))) {
+            if (nodeList.stream().noneMatch(t -> t.getTaskDirection().equals("to"))) {
                 nodeList.add(defaultWorkflow);
             }
         }
@@ -1127,7 +1116,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
         // 获取审批意见
         List<Comment> taskComments = taskService.getTaskComments(query.getId());
         if (taskComments != null && !taskComments.isEmpty()) {
-            workflowTaskHistoryDto.setComment(taskComments.get(0).getFullMessage());
+            workflowTaskHistoryDto.setComment(taskComments.getFirst().getFullMessage());
         }
 
         // 获取审批的变量
@@ -1184,7 +1173,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
     private boolean checkAssignee(String assignee, UserFullListDto userInfo) {
         if (!StrUtil.isEmpty(assignee)) {
             String[] assignees = assignee.split(",");
-            List<String> assigneeList = Arrays.stream(assignees).map(String::trim).collect(toList());
+            List<String> assigneeList = Arrays.stream(assignees).map(String::trim).toList();
             boolean isUser = assigneeList.stream().anyMatch(e -> e.equals(userInfo.getId().toString()));
             long containRole =
                     userInfo.getUserRoles().stream().filter(p -> assigneeList.contains(p.getRoleName())).count();
@@ -1196,7 +1185,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
 
     private boolean hasTaskPermission(List<String> assignees, UserFullListDto userInfo) {
         boolean hasPermission = false;
-        if (assignees != null && assignees.size() > 0) {
+        if (assignees != null && !assignees.isEmpty()) {
             for (String assignee : assignees) {
                 hasPermission = checkAssignee(assignee, userInfo);
                 if (hasPermission) {
@@ -1220,7 +1209,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
         TaskFormData taskFormData = formService.getTaskFormData(task.getId());
         List<FormProperty> formProperties = taskFormData.getFormProperties();
         String formKey = taskFormData.getFormKey();
-        workflowTaskDto.setFormProperties(DozerUtils.mapList(dozerMapper, formProperties, FormPropertyDto.class));
+        workflowTaskDto.setFormProperties(MapperUtil.mapList(formProperties, mapper::ToFormPropertyDto));
         workflowTaskDto.setFormKey(formKey);
         workflowTaskDto.setDefinitionKey(task.getTaskDefinitionKey());
 
@@ -1254,11 +1243,10 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
                 variables.put(ActivitiConstants.STARTER, workflowProcessDto.getStarter());
             }
 
-            ProcessInstance processInstance = runtimeService
+            return runtimeService
                     .startProcessInstanceByKeyAndTenantId(workflowProcessDto.getProcessDefinitionKey(),
                             workflowProcessDto.getBusinessKey(), variables,
                             String.valueOf(TenantContextHolder.getTenantId()));
-            return processInstance;
         } catch (Exception ex) {
             throw new BusinessException(ex.getMessage());
         }
@@ -1303,7 +1291,7 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
                 extensionsDto.setBusinessData(businessData);
                 String extensions = "";
                 try {
-                    extensions = mapper.writeValueAsString(extensionsDto);
+                    extensions = objectMapper.writeValueAsString(extensionsDto);
                 } catch (JsonProcessingException e) {
                     log.error("序列化对象异常", e);
                 }
@@ -1376,9 +1364,9 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
     }
 
     private boolean checkProcessCanRecallPre(List<HistoricTaskInstance> historicTaskInstances, ProcessDefinitionEntity processDefinitionEntity, List<Task> userTasks) {
-        if (historicTaskInstances.size() > 0) {
+        if (!historicTaskInstances.isEmpty()) {
             //上一个流程实例
-            HistoricTaskInstance historicTaskInstance = historicTaskInstances.get(0);
+            HistoricTaskInstance historicTaskInstance = historicTaskInstances.getFirst();
             String nowUserId = LoginUserIdContextHolder.getUserId() == null ? "" : LoginUserIdContextHolder.getUserId().toString();
             if (!historicTaskInstance.getAssignee().equals(nowUserId)) {
                 return false;
@@ -1391,22 +1379,19 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
                 return false;
             }
             if (userTasks.size() == 1) {
-                Task currTask = userTasks.get(0);
+                Task currTask = userTasks.getFirst();
                 TaskFormKey taskFormKey = getTaskFormKey(currTask.getFormKey());
                 if (!taskFormKey.getActiviti().isCallBackPre()) {
                     return false;
                 }
                 //当前节点审批过，并且撤回的节点是自己则不允许撤回
-                if (currTask.getTaskDefinitionKey().equals(historicTaskInstance.getTaskDefinitionKey())) {
-                    return false;
-                }
+                return !currTask.getTaskDefinitionKey().equals(historicTaskInstance.getTaskDefinitionKey());
             } else {
                 return false;
             }
         } else {
             return false;
         }
-        return true;
     }
 
     private List<HistoricTaskInstance> getHistoricTaskInstanceDesc(String processInstanceId) {
@@ -1415,10 +1400,6 @@ public class WorkflowServiceImpl implements IWorkFlowRpcService, IWorkflowServic
 
     private ProcessDefinitionEntity getProcessDefinitionEntity(String processInstanceId) {
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
-        ProcessDefinitionEntity processDefinitionEntity = (ProcessDefinitionEntity) repositoryService.getProcessDefinition(processInstance.getProcessDefinitionId());
-        return processDefinitionEntity;
+        return (ProcessDefinitionEntity) repositoryService.getProcessDefinition(processInstance.getProcessDefinitionId());
     }
-
-
-    //endregion
 }

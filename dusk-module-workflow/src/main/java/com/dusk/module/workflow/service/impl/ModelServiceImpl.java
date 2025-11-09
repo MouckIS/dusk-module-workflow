@@ -4,13 +4,13 @@ import cn.hutool.core.util.StrUtil;
 import com.dusk.common.core.dto.PagedResultDto;
 import com.dusk.common.core.exception.BusinessException;
 import com.dusk.common.core.tenant.TenantContextHolder;
-import com.dusk.common.core.utils.DozerUtils;
+import com.dusk.common.core.utils.MapperUtil;
 import com.dusk.module.workflow.dto.GetModelsInput;
 import com.dusk.module.workflow.dto.ModelDto;
+import com.dusk.module.workflow.mapper.WorkflowMapper;
 import com.dusk.module.workflow.service.IModelService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.github.dozermapper.core.Mapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.activiti.bpmn.converter.BpmnXMLConverter;
@@ -42,12 +42,11 @@ import java.util.List;
 @Transactional
 public class ModelServiceImpl implements IModelService {
 
+    private final WorkflowMapper mapper = WorkflowMapper.INSTANCE;
     @Autowired
-    RepositoryService repositoryService;
+    private RepositoryService repositoryService;
     @Autowired
-    ObjectMapper objectMapper;
-    @Autowired
-    private Mapper dozerMapper;
+    private ObjectMapper objectMapper;
 
     @SneakyThrows
     @Override
@@ -97,7 +96,7 @@ public class ModelServiceImpl implements IModelService {
         }
         long total = modelQuery.count();
         List<Model> models = modelQuery.listPage((input.getPageNumber() - 1) * input.getPageSize(), input.getPageSize());
-        return new PagedResultDto<>(total, DozerUtils.mapList(dozerMapper, models, ModelDto.class));
+        return new PagedResultDto<>(total, MapperUtil.mapList(models, mapper::toDto));
     }
 
     @Override
@@ -113,10 +112,9 @@ public class ModelServiceImpl implements IModelService {
                 .modelTenantId(String.valueOf(TenantContextHolder.getTenantId()))
                 .modelVersion(version)
                 .latestVersion().list();
-        if(list.size()==0){
+        if (list.size() == 0) {
             throw new BusinessException("数据已被他人修改，请刷新后重试！");
-        }
-        else {
+        } else {
             repositoryService.deleteModel(list.get(0).getId());
         }
         return true;

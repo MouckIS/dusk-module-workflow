@@ -5,8 +5,6 @@ import com.dusk.common.mqs.enums.PushType;
 import com.dusk.common.mqs.pusher.Navigation;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.Map;

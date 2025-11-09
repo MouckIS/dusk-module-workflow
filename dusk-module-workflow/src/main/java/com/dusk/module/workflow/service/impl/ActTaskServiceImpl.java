@@ -52,13 +52,13 @@ public class ActTaskServiceImpl implements IActTaskService {
     @Override
     public PagedResultDto<WorkflowTaskDto> getTasks(PagedAndSortedInputDto input) {
         TaskQuery taskQuery = taskService.createTaskQuery().taskTenantId(String.valueOf(TenantContextHolder.getTenantId()));
-        long total=taskQuery.count();
+        long total = taskQuery.count();
         List<WorkflowTaskDto> result = taskQuery.listPage((input.getPageNumber() - 1) * input.getPageSize(), input.getPageSize()).stream().map(task -> {
             WorkflowTaskDto workflowTaskDto = new WorkflowTaskDto();
             BeanUtils.copyProperties(task, workflowTaskDto, "identityLinks");
             return workflowTaskDto;
         }).collect(Collectors.toList());
-        return new PagedResultDto<>(total,result);
+        return new PagedResultDto<>(total, result);
     }
 
     @Override

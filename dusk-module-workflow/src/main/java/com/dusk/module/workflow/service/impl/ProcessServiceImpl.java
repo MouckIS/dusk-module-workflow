@@ -6,8 +6,8 @@ import com.dusk.common.core.dto.PagedResultDto;
 import com.dusk.common.core.tenant.TenantContextHolder;
 import com.dusk.module.workflow.dto.GetProcessesInput;
 import com.dusk.module.workflow.dto.ProcessDefDto;
+import com.dusk.module.workflow.mapper.WorkflowMapper;
 import com.dusk.module.workflow.service.IProcessService;
-import com.github.dozermapper.core.Mapper;
 import lombok.extern.slf4j.Slf4j;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
@@ -32,12 +32,11 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class ProcessServiceImpl implements IProcessService {
+    private final WorkflowMapper mapper = WorkflowMapper.INSTANCE;
     @Autowired
-    RepositoryService repositoryService;
+    private RepositoryService repositoryService;
     @Autowired
-    RuntimeService runtimeService;
-    @Autowired
-    Mapper dozerMapper;
+    private RuntimeService runtimeService;
 
     @Override
     public boolean removeProcIns(String deploymentId) {
@@ -64,7 +63,7 @@ public class ProcessServiceImpl implements IProcessService {
         List<ProcessDefDto> collect = processDefinitionList.stream().map(processDefinition -> {
             Deployment deployment = repositoryService.createDeploymentQuery()
                     .deploymentId(processDefinition.getDeploymentId()).singleResult();
-            ProcessDefDto dto = dozerMapper.map(processDefinition, ProcessDefDto.class);
+            ProcessDefDto dto = mapper.toProcessDefDto(processDefinition);
             dto.setDeploymentId(deployment.getId());
             dto.setName(deployment.getName());
             dto.setDeploymentTime(deployment.getDeploymentTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
@@ -80,7 +79,7 @@ public class ProcessServiceImpl implements IProcessService {
                 .createProcessInstanceQuery()
                 .processInstanceId(proInsId)
                 .singleResult();
-       var procDefId = processInstance.getProcessDefinitionId();
+        var procDefId = processInstance.getProcessDefinitionId();
         ProcessDefinition processDefinition = repositoryService
                 .createProcessDefinitionQuery()
                 .processDefinitionId(procDefId)

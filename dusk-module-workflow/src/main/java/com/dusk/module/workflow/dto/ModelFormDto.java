@@ -1,9 +1,8 @@
 package com.dusk.module.workflow.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
-
-import jakarta.validation.constraints.NotBlank;
 
 /**
  * @author kefuming
