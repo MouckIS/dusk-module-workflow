@@ -39,8 +39,7 @@ import java.util.List;
 @Tag(description = "工作流管理", name = "Workflow")
 public class WorkflowController extends CruxBaseController {
     @Autowired
-    IWorkflowService workflowService;
-
+    private IWorkflowService workflowService;
     @Autowired
     private RepositoryService repositoryService;
     @Autowired
