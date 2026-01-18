@@ -10,8 +10,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication(scanBasePackages = {
         "com.dusk.module.workflow",
         "com.dusk.common.core"
-}, exclude = {
-        org.activiti.spring.boot.SecurityAutoConfiguration.class})
+})
 public class DuskWorkflowApplication {
     public static void main(String[] args) {
         SpringApplication.run(DuskWorkflowApplication.class, args);

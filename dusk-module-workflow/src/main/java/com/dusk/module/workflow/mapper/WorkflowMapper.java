@@ -4,9 +4,9 @@ import com.dusk.module.workflow.dto.AppPushDto;
 import com.dusk.module.workflow.dto.ModelDto;
 import com.dusk.module.workflow.dto.ProcessDefDto;
 import com.dusk.workflow.dto.*;
-import org.activiti.engine.form.FormProperty;
-import org.activiti.engine.repository.Model;
-import org.activiti.engine.repository.ProcessDefinition;
+import org.flowable.engine.form.FormProperty;
+import org.flowable.engine.repository.Model;
+import org.flowable.engine.repository.ProcessDefinition;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
