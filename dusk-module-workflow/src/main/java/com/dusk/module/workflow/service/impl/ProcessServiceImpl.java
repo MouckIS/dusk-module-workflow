@@ -9,12 +9,12 @@ import com.dusk.module.workflow.dto.ProcessDefDto;
 import com.dusk.module.workflow.mapper.WorkflowMapper;
 import com.dusk.module.workflow.service.IProcessService;
 import lombok.extern.slf4j.Slf4j;
-import org.activiti.engine.RepositoryService;
-import org.activiti.engine.RuntimeService;
-import org.activiti.engine.repository.Deployment;
-import org.activiti.engine.repository.ProcessDefinition;
-import org.activiti.engine.repository.ProcessDefinitionQuery;
-import org.activiti.engine.runtime.ProcessInstance;
+import org.flowable.engine.RepositoryService;
+import org.flowable.engine.RuntimeService;
+import org.flowable.engine.repository.Deployment;
+import org.flowable.engine.repository.ProcessDefinition;
+import org.flowable.engine.repository.ProcessDefinitionQuery;
+import org.flowable.engine.runtime.ProcessInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,9 +33,9 @@ import java.util.stream.Collectors;
 @Service
 public class ProcessServiceImpl implements IProcessService {
     private final WorkflowMapper mapper = WorkflowMapper.INSTANCE;
-    @Autowired
+    @Autowired(required = false)
     private RepositoryService repositoryService;
-    @Autowired
+    @Autowired(required = false)
     private RuntimeService runtimeService;
 
     @Override

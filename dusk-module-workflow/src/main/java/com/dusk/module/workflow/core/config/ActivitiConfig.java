@@ -1,6 +1,6 @@
 package com.dusk.module.workflow.core.config;
 
-import org.activiti.spring.SpringProcessEngineConfiguration;
+import org.flowable.spring.SpringProcessEngineConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

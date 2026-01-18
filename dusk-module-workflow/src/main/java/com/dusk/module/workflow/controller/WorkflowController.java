@@ -16,11 +16,11 @@ import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.activiti.bpmn.model.BpmnModel;
-import org.activiti.engine.ProcessEngineConfiguration;
-import org.activiti.engine.RepositoryService;
-import org.activiti.engine.repository.ProcessDefinition;
-import org.activiti.image.ProcessDiagramGenerator;
+import org.flowable.bpmn.model.BpmnModel;
+import org.flowable.engine.ProcessEngineConfiguration;
+import org.flowable.engine.RepositoryService;
+import org.flowable.engine.repository.ProcessDefinition;
+import org.flowable.image.ProcessDiagramGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,7 +40,7 @@ import java.util.List;
 public class WorkflowController extends CruxBaseController {
     @Autowired
     private IWorkflowService workflowService;
-    @Autowired
+    @Autowired(required = false)
     private RepositoryService repositoryService;
     @Autowired
     private ProcessEngineConfiguration processEngineConfiguration;
@@ -96,7 +96,7 @@ public class WorkflowController extends CruxBaseController {
         InputStream is = diagramGenerator.generateDiagram(bm, "png",
                 processEngineConfiguration.getActivityFontName(),
                 processEngineConfiguration.getLabelFontName(), processEngineConfiguration.getAnnotationFontName(),
-                processEngineConfiguration.getClassLoader(), 1.0);
+                processEngineConfiguration.getClassLoader(), true);
         try {
             int size = is.available();
             byte[] data = new byte[size];
