@@ -17,11 +17,31 @@ import java.util.Map;
 /**
  * 工作流事件发布器
  * <p>
- * 同时发布Spring ApplicationEvent（进程内监听）和RabbitMQ消息（跨服务监听）
+ * 采用 <b>双通道发布</b> 策略：
+ * <ol>
+ *   <li><b>Spring ApplicationEvent</b> —— 进程内异步通知，由 {@link WorkflowEventConsumer} 接收并分发给本地 {@link com.dusk.workflow.service.IWorkflowListener}</li>
+ *   <li><b>RabbitMQ</b> —— 跨服务通知，消息发送到 {@code workflow.event.exchange}，routing key 格式：{@code workflow.event.{event_type}}</li>
+ * </ol>
+ * </p>
+ * <p>
+ * 当 RabbitMQ 未启用时（{@code spring.rabbitmq.is-enabled=false}），仅发布 Spring 事件，MQ 消息自动跳过。
+ * MQ 发布失败时只记录错误日志，不影响主流程执行。
+ * </p>
+ * <p>
+ * 事件发布时机由 {@code WorkflowServiceImpl} 在以下节点调用：
+ * <ul>
+ *   <li>流程启动后 → PROCESS_STARTED + TASK_CREATED</li>
+ *   <li>任务完成后 → TASK_COMPLETED + (PROCESS_COMPLETED 或 TASK_CREATED)</li>
+ *   <li>流程撤回后 → PROCESS_RECALLED</li>
+ *   <li>节点跳转后 → TASK_JUMPED</li>
+ *   <li>抄送发送后 → TASK_CC</li>
+ * </ul>
  * </p>
  *
  * @author kefuming
- * @date 2026-02-28
+ * @see WorkflowEventConsumer
+ * @see WorkflowSpringEvent
+ * @see com.dusk.module.workflow.core.config.WorkflowMqConfig
  */
 @Slf4j
 @Component

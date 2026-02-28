@@ -18,11 +18,25 @@ import java.util.List;
 /**
  * 工作流事件消费者
  * <p>
- * 负责接收MQ消息和Spring内部事件，并分发给所有注册的 {@link IWorkflowListener} 实现
+ * 负责接收来自两个通道的事件并统一分发给所有注册的 {@link IWorkflowListener} 实现：
+ * <ul>
+ *   <li><b>Spring事件通道</b>：通过 {@code @Async @EventListener} 异步处理 {@link WorkflowSpringEvent}</li>
+ *   <li><b>RabbitMQ通道</b>：通过 {@code @RabbitListener} 监听 {@code workflow.event.queue} 队列</li>
+ * </ul>
+ * </p>
+ * <p>
+ * 分发策略：
+ * <ul>
+ *   <li>遍历所有 {@link IWorkflowListener} Bean</li>
+ *   <li>如果 listener 的 {@code getProcessKey()} 为 null，则接收所有事件</li>
+ *   <li>如果 listener 的 {@code getProcessKey()} 与事件的 processDefinitionKey 匹配，则接收</li>
+ *   <li>单个 listener 抛异常不影响其他 listener 的执行</li>
+ * </ul>
  * </p>
  *
  * @author kefuming
- * @date 2026-02-28
+ * @see WorkflowEventPublisher
+ * @see IWorkflowListener
  */
 @Slf4j
 @Component

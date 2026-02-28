@@ -8,9 +8,18 @@ import java.util.Map;
 
 /**
  * 通用流程提交入参
+ * <p>
+ * 继承自 {@link WorkflowProcessDto}，用于 {@code genericSubmit()} 接口。
+ * 相比直接调用 {@code startProcess()}，增加了以下能力：
+ * <ul>
+ *   <li>{@code completeFirst} —— 是否自动完成第一个节点（发起人节点）</li>
+ *   <li>{@code ccUserIds} —— 提交时抄送指定用户（通过站内信通知）</li>
+ *   <li>自动触发 {@link com.dusk.workflow.service.IWorkflowSubmitProcessor} 的前/后置处理器</li>
+ * </ul>
+ * </p>
  *
  * @author kefuming
- * @date 2026-02-28
+ * @see com.dusk.workflow.service.IWorkflowSubmitProcessor
  */
 @Getter
 @Setter

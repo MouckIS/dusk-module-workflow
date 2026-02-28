@@ -7,8 +7,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 任务节点 formKey 配置模型
+ * <p>
+ * 流程设计器中每个UserTask节点的formKey字段存储一个JSON配置，反序列化为此对象。
+ * 用于控制候选人/角色、撤回权限、消息通知、抄送等行为。
+ * </p>
+ * <p>
+ * formKey JSON 示例：
+ * <pre>
+ * {
+ *   "activiti": {
+ *     "candidateRoles": "部门经理,总监",
+ *     "candidatePsns": "1001,1002",
+ *     "callBackPre": true,
+ *     "notice": { "addTodo": true, "appPush": true },
+ *     "carbonCopy": {
+ *       "enabled": true,
+ *       "ccUserIds": "2001,2002",
+ *       "ccRoles": "财务",
+ *       "template": "您收到一条审批抄送"
+ *     }
+ *   }
+ * }
+ * </pre>
+ * </p>
+ *
  * @author pengjian
- * @date 2021-11-30 14:41
  */
 @Getter
 @Setter

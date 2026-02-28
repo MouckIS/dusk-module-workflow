@@ -9,10 +9,26 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
- * 工作流事件DTO，用于MQ消息传递
+ * 工作流事件DTO，用于MQ消息传递和Spring事件通知
+ * <p>
+ * 携带了事件发生时的完整上下文信息，包括流程实例、任务、操作人、变量等。
+ * 该对象会被序列化为JSON通过RabbitMQ传输，同时也作为Spring内部事件的载体。
+ * </p>
+ * <p>
+ * 使用示例（在 IWorkflowListener 中接收）：
+ * <pre>
+ * public void onWorkflowEvent(WorkflowEventDto event) {
+ *     if (event.getEventType() == WorkflowEventType.TASK_COMPLETED) {
+ *         String businessKey = event.getBusinessKey();
+ *         // 处理业务逻辑...
+ *     }
+ * }
+ * </pre>
+ * </p>
  *
  * @author kefuming
- * @date 2026-02-28
+ * @see com.dusk.workflow.enums.WorkflowEventType
+ * @see com.dusk.workflow.service.IWorkflowListener
  */
 @Getter
 @Setter

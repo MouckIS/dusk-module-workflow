@@ -9,9 +9,18 @@ import java.util.Map;
 
 /**
  * 撤回流程输入参数
+ * <p>
+ * 用于 {@code recallProcess()} RPC/REST 接口。
+ * 撤回操作会将流程回退到上一个已完成的节点，同时：
+ * <ul>
+ *   <li>同步待办到待办中心</li>
+ *   <li>触发 {@link com.dusk.workflow.service.IWorkflowRecallHandler#onRecall} 业务回调</li>
+ *   <li>发布 {@code PROCESS_RECALLED} MQ 事件</li>
+ * </ul>
+ * </p>
  *
  * @author kefuming
- * @date 2026-02-28
+ * @see com.dusk.workflow.service.IWorkflowRecallHandler
  */
 @Getter
 @Setter

@@ -147,30 +147,62 @@ public class WorkflowController extends CruxBaseController {
         return workflowService.getCurrTasksWithAssigneeInfos(processId);
     }
 
+    /**
+     * 通用流程提交（带前置/后置处理器）
+     * <p>
+     * 执行流程：preSubmit → startProcess/completeFirst → postSubmit → 抄送
+     * 处理器通过 processDefinitionKey 自动匹配 IWorkflowSubmitProcessor 实现
+     * </p>
+     */
     @Schema(description = "通用流程提交（带前置/后置处理器）")
     @PostMapping("/genericSubmit")
     public StartProcessOutDto genericSubmit(@RequestBody GenericSubmitInput input) {
         return workflowService.genericSubmit(input);
     }
 
+    /**
+     * 通用流程审批（带前置/后置处理器）
+     * <p>
+     * 执行流程：preApproval → completeTask → postApproval → 抄送
+     * 处理器通过 processDefinitionKey 自动匹配 IWorkflowApprovalProcessor 实现
+     * </p>
+     *
+     * @return 审批后产生的新任务列表，空列表表示流程已结束
+     */
     @Schema(description = "通用流程审批（带前置/后置处理器）")
     @PostMapping("/genericApproval")
     public List<WorkflowTaskDto> genericApproval(@RequestBody GenericApprovalInput input) {
         return workflowService.genericApproval(input);
     }
 
+    /**
+     * 撤回流程至上一节点
+     * <p>
+     * 撤回后会同步待办、调用 IWorkflowRecallHandler 业务回调、发布 PROCESS_RECALLED 事件
+     * </p>
+     */
     @Schema(description = "撤回流程至上一节点")
     @PostMapping("/recallProcess")
     public void recallProcess(@RequestBody RecallProcessInput input) {
         workflowService.recallProcess(input);
     }
 
+    /**
+     * 节点跳转 —— 将流程从当前节点直接跳转到目标任意节点
+     * <p>
+     * 管理级功能，不做审批权限校验。
+     * 跳转完成后会同步待办并发布 TASK_JUMPED 事件。
+     * </p>
+     */
     @Schema(description = "节点跳转")
     @PostMapping("/jumpToNode")
     public void jumpToNode(@RequestBody JumpToNodeInput input) {
         workflowService.jumpToNode(input);
     }
 
+    /**
+     * 发送抄送通知 —— 通过站内信 INotificationRpcService 向指定用户发送通知
+     */
     @Schema(description = "发送抄送通知")
     @PostMapping("/carbonCopy")
     public void sendCarbonCopy(@RequestBody CarbonCopyInput input) {

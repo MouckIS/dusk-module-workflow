@@ -6,9 +6,17 @@ import lombok.Setter;
 
 /**
  * 通用流程审批入参
+ * <p>
+ * 继承自 {@link CompleteTaskInputDto}，用于 {@code genericApproval()} 接口。
+ * 相比直接调用 {@code completeTask()}，增加了以下能力：
+ * <ul>
+ *   <li>{@code ccUserIds} —— 审批时抄送指定用户（通过站内信通知）</li>
+ *   <li>自动触发 {@link com.dusk.workflow.service.IWorkflowApprovalProcessor} 的前/后置处理器</li>
+ * </ul>
+ * </p>
  *
  * @author kefuming
- * @date 2026-02-28
+ * @see com.dusk.workflow.service.IWorkflowApprovalProcessor
  */
 @Getter
 @Setter

@@ -94,28 +94,37 @@ public class WorkflowRpcServiceImpl implements IWorkFlowRpcService {
         workflowService.updateFlowVariables(input);
     }
 
+    // region 新增RPC方法 —— 通用审批、撤回、跳转、抄送
+
+    /** 通用流程提交：带前/后置处理器 + 抄送能力 */
     @Override
     public StartProcessOutDto genericSubmit(GenericSubmitInput input) {
         return workflowService.genericSubmit(input);
     }
 
+    /** 通用流程审批：带前/后置处理器 + 抄送能力 */
     @Override
     public List<WorkflowTaskDto> genericApproval(GenericApprovalInput input) {
         return workflowService.genericApproval(input);
     }
 
+    /** 撤回流程至上一节点：带业务回调 + MQ事件 */
     @Override
     public void recallProcess(RecallProcessInput input) {
         workflowService.recallProcess(input);
     }
 
+    /** 节点跳转：将流程跳转到目标任意节点 */
     @Override
     public void jumpToNode(JumpToNodeInput input) {
         workflowService.jumpToNode(input);
     }
 
+    /** 发送抄送通知：通过站内信 INotificationRpcService 实现 */
     @Override
     public void sendCarbonCopy(CarbonCopyInput input) {
         workflowService.sendCarbonCopy(input);
     }
+
+    // endregion
 }

@@ -145,38 +145,60 @@ public interface IWorkFlowRpcService {
 
     /**
      * 通用流程提交（带前置/后置处理器）
+     * <p>
+     * 执行顺序：IWorkflowSubmitProcessor.preSubmit → startProcess → postSubmit → 抄送
+     * 处理器按 processDefinitionKey 自动匹配，未匹配到则跳过处理器直接提交。
+     * </p>
      *
-     * @param input 提交参数
-     * @return 提交结果
+     * @param input 提交参数，包含流程定义Key、业务Key、变量、抄送人等
+     * @return 提交结果，包含流程实例ID和当前待办任务列表
+     * @see IWorkflowSubmitProcessor
      */
     StartProcessOutDto genericSubmit(GenericSubmitInput input);
 
     /**
      * 通用流程审批（带前置/后置处理器）
+     * <p>
+     * 执行顺序：IWorkflowApprovalProcessor.preApproval → completeTask → postApproval → 抄送
+     * 处理器按 processDefinitionKey 自动匹配，未匹配到则跳过处理器直接审批。
+     * </p>
      *
-     * @param input 审批参数
-     * @return 审批后产生的新任务列表
+     * @param input 审批参数，继承自CompleteTaskInputDto，新增ccUserIds
+     * @return 审批后产生的新任务列表（空列表表示流程已结束）
+     * @see IWorkflowApprovalProcessor
      */
     List<WorkflowTaskDto> genericApproval(GenericApprovalInput input);
 
     /**
      * 撤回流程至上一节点（带业务回调处理）
+     * <p>
+     * 撤回完成后会：同步待办 → 调用IWorkflowRecallHandler.onRecall → 发布PROCESS_RECALLED事件
+     * </p>
      *
      * @param input 撤回参数
+     * @see IWorkflowRecallHandler
      */
     void recallProcess(RecallProcessInput input);
 
     /**
-     * 节点跳转
+     * 节点跳转 —— 将流程从当前节点直接跳转到目标任意节点
+     * <p>
+     * 管理级功能，跳转完成后会同步待办并发布TASK_JUMPED事件。
+     * 支持多任务并行场景（并行网关），会将所有当前任务跳转到目标节点。
+     * </p>
      *
-     * @param input 跳转参数
+     * @param input 跳转参数，包含processInstanceId和targetTaskDefinitionKey
      */
     void jumpToNode(JumpToNodeInput input);
 
     /**
-     * 发送抄送通知
+     * 发送抄送通知 —— 通过站内信 {@link INotificationRpcService} 向指定用户发送通知
+     * <p>
+     * 发送成功后会发布TASK_CC事件。通知服务不可用时仅记录错误日志，不阻断主流程。
+     * </p>
      *
-     * @param input 抄送参数
+     * @param input 抄送参数，包含ccUserIds、title、content等
+     * @see INotificationRpcService
      */
     void sendCarbonCopy(CarbonCopyInput input);
 }

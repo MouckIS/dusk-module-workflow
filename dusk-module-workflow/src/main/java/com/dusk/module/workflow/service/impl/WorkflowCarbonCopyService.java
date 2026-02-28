@@ -17,11 +17,24 @@ import java.util.stream.Collectors;
 /**
  * 工作流抄送服务
  * <p>
- * 通过站内信 {@link INotificationRpcService} 实现抄送通知
+ * 通过站内信 {@link INotificationRpcService} 向指定用户发送抄送通知，
+ * 同时发布 {@code TASK_CC} 事件到MQ。
+ * </p>
+ * <p>
+ * 抄送触发场景：
+ * <ul>
+ *   <li>通用提交接口 {@code genericSubmit()} 设置了 ccUserIds</li>
+ *   <li>通用审批接口 {@code genericApproval()} 设置了 ccUserIds</li>
+ *   <li>手动调用 REST {@code POST /workflow/carbonCopy} 或 RPC {@code sendCarbonCopy()}</li>
+ * </ul>
+ * </p>
+ * <p>
+ * {@code INotificationRpcService} 通过 Dubbo RPC 调用通知模块实现。
+ * 如果通知模块不可用（{@code check=false}），发送失败仅记录日志，不阻断主流程。
  * </p>
  *
  * @author kefuming
- * @date 2026-02-28
+ * @see INotificationRpcService
  */
 @Slf4j
 @Component

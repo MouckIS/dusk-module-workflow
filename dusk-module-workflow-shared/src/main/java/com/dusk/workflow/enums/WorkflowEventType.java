@@ -1,10 +1,16 @@
 package com.dusk.workflow.enums;
 
 /**
- * 工作流事件类型
+ * 工作流事件类型枚举
+ * <p>
+ * 定义了工作流引擎在关键节点自动发布的事件类型。
+ * 事件通过 {@code WorkflowEventPublisher} 发布到 Spring ApplicationEvent 和 RabbitMQ 双通道，
+ * 业务模块通过实现 {@link com.dusk.workflow.service.IWorkflowListener} 接口来监听这些事件。
+ * </p>
  *
  * @author kefuming
- * @date 2026-02-28
+ * @see com.dusk.workflow.dto.WorkflowEventDto
+ * @see com.dusk.workflow.service.IWorkflowListener
  */
 public enum WorkflowEventType {
     /**

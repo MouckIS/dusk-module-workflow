@@ -5,12 +5,15 @@ import java.util.List;
 /**
  * 站内信通知RPC接口
  * <p>
- * 用于工作流抄送等场景下发送站内消息。
- * 由通知模块提供具体实现。
+ * 用于工作流抄送等场景下发送站内消息通知。
+ * 由通知模块（如 dusk-module-notification）提供 Dubbo 实现。
+ * 工作流模块中的 {@code WorkflowCarbonCopyService} 通过此接口发送抄送站内信。
+ * </p>
+ * <p>
+ * 如果通知模块尚未实现此接口，工作流的抄送功能会降级处理（记录错误日志但不阻断主流程）。
  * </p>
  *
  * @author kefuming
- * @date 2026-02-28
  */
 public interface INotificationRpcService {
 

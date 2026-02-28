@@ -15,12 +15,18 @@ import java.util.stream.Collectors;
 /**
  * 工作流处理器注册中心
  * <p>
- * 收集所有 {@link IWorkflowSubmitProcessor} 和 {@link IWorkflowApprovalProcessor} 实现，
- * 并按 processKey 索引。
+ * 容器启动时自动收集所有 {@link IWorkflowSubmitProcessor} 和 {@link IWorkflowApprovalProcessor} 的 Spring Bean，
+ * 按 {@code processKey} 建立索引映射。在 {@code WorkflowServiceImpl.genericSubmit()} 和 {@code genericApproval()}
+ * 方法中，根据流程定义Key查找对应的处理器实例来执行前/后置逻辑。
+ * </p>
+ * <p>
+ * 每个 processKey 仅允许注册一个处理器，重复注册时后者覆盖前者并输出警告日志。
+ * 没有找到处理器时不影响流程正常执行（处理器是可选的扩展点）。
  * </p>
  *
  * @author kefuming
- * @date 2026-02-28
+ * @see IWorkflowSubmitProcessor
+ * @see IWorkflowApprovalProcessor
  */
 @Slf4j
 @Component

@@ -131,12 +131,16 @@ public class WorkflowServiceImpl implements IWorkflowService {
     private ITodoRpcService todoRpcService;
     @Resource
     private ObjectMapper objectMapper;
+    /** 工作流事件发布器 —— 在关键节点发布事件到Spring ApplicationEvent和RabbitMQ */
     @Autowired
     private WorkflowEventPublisher eventPublisher;
+    /** 处理器注册中心 —— 管理所有IWorkflowSubmitProcessor和IWorkflowApprovalProcessor */
     @Autowired
     private WorkflowProcessorRegistry processorRegistry;
+    /** 抄送服务 —— 通过INotificationRpcService发送站内信 */
     @Autowired
     private WorkflowCarbonCopyService carbonCopyService;
+    /** 撤回业务处理器列表 —— 各业务模块注册的IWorkflowRecallHandler实现 */
     @Autowired(required = false)
     private List<IWorkflowRecallHandler> recallHandlers = Collections.emptyList();
 
@@ -152,12 +156,14 @@ public class WorkflowServiceImpl implements IWorkflowService {
         result.setTaskInfos(tasksByProcess);
         //同步待办
         syncTodos(processInstance, tasksByProcess, mapper.workflowProcessDtoToAppPushDto(workflowProcessDto), workflowProcessDto.getBusinessData());
-        //发布流程启动事件
+
+        // === MQ事件发布 ===
+        // 发布流程启动事件 —— 通知业务模块流程已启动
         eventPublisher.publish(WorkflowEventType.PROCESS_STARTED, processInstance.getProcessInstanceId(),
                 workflowProcessDto.getProcessDefinitionKey(), workflowProcessDto.getBusinessKey(),
                 null, null, null, null, null,
                 workflowProcessDto.getVariables(), workflowProcessDto.getBusinessData());
-        //发布任务创建事件
+        // 发布任务创建事件 —— 每个新产生的待办任务都发布一个TASK_CREATED事件
         for (WorkflowTaskDto task : tasksByProcess) {
             eventPublisher.publish(WorkflowEventType.TASK_CREATED, processInstance.getProcessInstanceId(),
                     workflowProcessDto.getProcessDefinitionKey(), workflowProcessDto.getBusinessKey(),
@@ -684,6 +690,24 @@ public class WorkflowServiceImpl implements IWorkflowService {
         recallPre(processInstanceId, null);
     }
 
+    /**
+     * 撤回流程至上一节点（增强版）
+     * <p>
+     * 在原有撤回逻辑基础上增加了：
+     * <ul>
+     *   <li>同步待办到待办中心</li>
+     *   <li>调用业务撤回处理器 {@link IWorkflowRecallHandler#onRecall(WorkflowRecallDto)}，允许业务模块回滚状态</li>
+     *   <li>发布 PROCESS_RECALLED 事件到MQ</li>
+     * </ul>
+     * </p>
+     * <p>
+     * 撤回条件校验沿用原逻辑（见 {@link #checkProcessCanRecallPre}）：
+     * 上一节点非会签、上一节点是自己审批的、当前节点允许撤回、不是同一节点
+     * </p>
+     *
+     * @param processInstanceId 流程实例ID
+     * @param businessData      业务数据（用于同步待办时传递给待办中心）
+     */
     @Override
     public void recallPre(String processInstanceId, Map<String, Object> businessData) {
         List<HistoricTaskInstance> historicTaskInstanceDesc = getHistoricTaskInstanceDesc(processInstanceId);
@@ -711,7 +735,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         List<WorkflowTaskDto> tasksByProcess = getTasksByProcessAndInitAssignee(params, false);
         syncTodos(processInstance, tasksByProcess, null, businessData);
 
-        //调用业务撤回处理器
+        //调用业务撤回处理器 —— 遍历所有IWorkflowRecallHandler，匹配processKey后执行onRecall回调
         String processDefinitionKey = processInstance.getProcessDefinitionKey();
         for (IWorkflowRecallHandler handler : recallHandlers) {
             if (processDefinitionKey.equals(handler.getProcessKey())) {
@@ -793,17 +817,20 @@ public class WorkflowServiceImpl implements IWorkflowService {
         params.add(input.getProcessInstanceId());
         List<WorkflowTaskDto> tasksByProcess = getTasksByProcessAndInitAssignee(params, false);
         syncTodos(processInstance, tasksByProcess, mapper.completeTaskInputDtoToAppPushDto(input), input.getBusinessData());
-        //发布任务完成事件
+
+        // === MQ事件发布 ===
+        // 发布任务完成事件
         eventPublisher.publish(WorkflowEventType.TASK_COMPLETED, input.getProcessInstanceId(),
                 processInstance.getProcessDefinitionKey(), processInstance.getBusinessKey(),
                 input.getTaskId(), null, null, null, input.getComment(),
                 input.getVariables(), input.getBusinessData());
-        //检查流程是否结束
+        // 检查流程是否已结束（所有节点都走完了）
         if (checkProcessEnd(input.getProcessInstanceId())) {
+            // 流程结束 → 发布 PROCESS_COMPLETED
             eventPublisher.publish(WorkflowEventType.PROCESS_COMPLETED, input.getProcessInstanceId(),
                     processInstance.getProcessDefinitionKey(), processInstance.getBusinessKey());
         } else {
-            //发布新任务创建事件
+            // 流程未结束 → 为每个新产生的任务发布 TASK_CREATED
             for (WorkflowTaskDto task : tasksByProcess) {
                 eventPublisher.publish(WorkflowEventType.TASK_CREATED, input.getProcessInstanceId(),
                         processInstance.getProcessDefinitionKey(), processInstance.getBusinessKey(),
@@ -923,8 +950,22 @@ public class WorkflowServiceImpl implements IWorkflowService {
         }
     }
 
-    //region 通用流程接口
+    //region 通用流程接口 —— 带前/后置处理器和抄送能力
 
+    /**
+     * 通用流程提交
+     * <p>
+     * 执行顺序：
+     * 1. 根据 processKey 查找 {@link IWorkflowSubmitProcessor}
+     * 2. 调用 preSubmit() 前置处理器（可修改入参、校验业务规则）
+     * 3. 启动流程（根据 completeFirst 决定是否同时完成第一个节点）
+     * 4. 调用 postSubmit() 后置处理器（可更新业务状态）
+     * 5. 若设置了 ccUserIds，发送抄送站内信
+     * </p>
+     *
+     * @param input 通用提交入参，包含流程定义Key、业务Key、变量、抄送人等
+     * @return 启动结果，包含流程实例ID和当前待办任务列表
+     */
     @Override
     @SneakyThrows
     public StartProcessOutDto genericSubmit(GenericSubmitInput input) {
@@ -976,6 +1017,20 @@ public class WorkflowServiceImpl implements IWorkflowService {
         return result;
     }
 
+    /**
+     * 通用流程审批
+     * <p>
+     * 执行顺序：
+     * 1. 根据流程实例查找 processDefinitionKey，再查找 {@link IWorkflowApprovalProcessor}
+     * 2. 调用 preApproval() 前置处理器（可修改变量、校验权限）
+     * 3. 完成审批任务（调用 completeTask）
+     * 4. 调用 postApproval() 后置处理器（可根据审批结果更新业务状态）
+     * 5. 若设置了 ccUserIds，发送抄送站内信
+     * </p>
+     *
+     * @param input 通用审批入参，继承自 CompleteTaskInputDto，新增 ccUserIds
+     * @return 审批后产生的新任务列表（空列表表示流程已结束）
+     */
     @Override
     @SneakyThrows
     public List<WorkflowTaskDto> genericApproval(GenericApprovalInput input) {
@@ -1009,11 +1064,37 @@ public class WorkflowServiceImpl implements IWorkflowService {
         return result;
     }
 
+    /**
+     * 撤回流程至上一节点（RPC 入口）
+     * <p>
+     * 委托给 {@link #recallPre(String, Map)}，传入 businessData 用于同步待办。
+     * </p>
+     */
     @Override
     public void recallProcess(RecallProcessInput input) {
         recallPre(input.getProcessInstanceId(), input.getBusinessData());
     }
 
+    /**
+     * 节点跳转 —— 将流程从当前节点直接跳转到目标节点
+     * <p>
+     * 跳转原理：利用 Activiti 的 ActivityImpl 动态替换出线机制
+     * <ol>
+     *   <li>校验流程实例存在且活跃</li>
+     *   <li>校验目标节点在流程定义中存在</li>
+     *   <li>设置流程变量（如果有）</li>
+     *   <li>对每个当前活动任务：清除出线 → 创建到目标节点的临时出线 → 完成任务 → 恢复原始出线</li>
+     *   <li>同步待办到待办中心</li>
+     *   <li>发布 TASK_JUMPED 事件</li>
+     * </ol>
+     * </p>
+     * <p>
+     * 注意：跳转操作是管理级功能，不做审批权限校验。
+     * 支持多任务并行场景（如并行网关），会将所有当前任务跳转到目标节点。
+     * </p>
+     *
+     * @param input 跳转参数，包含 processInstanceId、targetTaskDefinitionKey、comment、variables
+     */
     @Override
     @SneakyThrows
     public void jumpToNode(JumpToNodeInput input) {
@@ -1065,6 +1146,14 @@ public class WorkflowServiceImpl implements IWorkflowService {
                 input.getComment(), input.getVariables(), input.getBusinessData());
     }
 
+    /**
+     * 发送抄送通知
+     * <p>
+     * 委托给 {@link WorkflowCarbonCopyService}，
+     * 通过站内信 {@code INotificationRpcService} 向指定用户发送通知，
+     * 同时发布 TASK_CC 事件。
+     * </p>
+     */
     @Override
     public void sendCarbonCopy(CarbonCopyInput input) {
         carbonCopyService.sendCarbonCopy(input);

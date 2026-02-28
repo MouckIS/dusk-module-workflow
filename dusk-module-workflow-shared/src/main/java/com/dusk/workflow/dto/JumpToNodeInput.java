@@ -9,9 +9,20 @@ import java.util.Map;
 
 /**
  * 节点跳转输入参数
+ * <p>
+ * 用于 {@code jumpToNode()} RPC/REST 接口。
+ * 允许将流程从当前活动节点直接跳转到流程定义中的任意目标节点。
+ * </p>
+ * <p>
+ * 跳转原理：通过动态替换 Activiti ActivityImpl 的出线实现，
+ * 复用 {@code gotoAssignActivity()} 方法，支持多任务并行场景。
+ * 跳转完成后会自动同步待办并发布 {@code TASK_JUMPED} 事件。
+ * </p>
+ * <p>
+ * 注意：此为管理级功能，不做审批权限校验。
+ * </p>
  *
  * @author kefuming
- * @date 2026-02-28
  */
 @Getter
 @Setter

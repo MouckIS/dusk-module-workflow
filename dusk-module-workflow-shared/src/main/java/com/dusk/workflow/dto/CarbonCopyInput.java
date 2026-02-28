@@ -9,9 +9,16 @@ import java.util.List;
 
 /**
  * 抄送输入参数
+ * <p>
+ * 用于 {@code sendCarbonCopy()} RPC/REST 接口，主动向指定用户发送抄送站内信。
+ * 抄送通过 {@link com.dusk.workflow.service.INotificationRpcService} 发送站内信通知，
+ * 同时发布 {@code TASK_CC} 事件到 MQ。
+ * </p>
+ * <p>
+ * 也可在 {@code genericSubmit()} / {@code genericApproval()} 中通过设置 ccUserIds 字段自动触发抄送。
+ * </p>
  *
  * @author kefuming
- * @date 2026-02-28
  */
 @Getter
 @Setter
