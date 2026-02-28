@@ -151,4 +151,12 @@ public interface IWorkflowService extends IWorkFlowRpcService {
      */
     void recallPre(String processInstanceId);
 
+    /**
+     * 驳回至上一节点(带同步待办)
+     *
+     * @param processInstanceId
+     * @param businessData
+     */
+    void recallPre(String processInstanceId, Map<String, Object> businessData);
+
 }

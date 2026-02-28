@@ -31,6 +31,9 @@ public class TaskFormKey {
 
         private Notice notice = new Notice();
 
+        // 抄送配置
+        private CarbonCopy carbonCopy = new CarbonCopy();
+
         public String getCandidateRoles() {
             return toStr(candidateRoles);
         }
@@ -79,5 +82,32 @@ public class TaskFormKey {
          * app顶部消息推送， addTodo开启的时候才会生效
          */
         private boolean appPush = true;
+    }
+
+    /**
+     * 抄送配置
+     */
+    @Getter
+    @Setter
+    public static class CarbonCopy {
+        /**
+         * 是否启用抄送
+         */
+        private boolean enabled = false;
+
+        /**
+         * 抄送的用户ID列表，多个用逗号分隔
+         */
+        private String ccUserIds;
+
+        /**
+         * 抄送的角色名称列表，多个用逗号分隔（会解析为具体用户）
+         */
+        private String ccRoles;
+
+        /**
+         * 抄送消息模板
+         */
+        private String template;
     }
 }

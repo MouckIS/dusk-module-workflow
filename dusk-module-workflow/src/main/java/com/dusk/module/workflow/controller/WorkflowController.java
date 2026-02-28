@@ -7,9 +7,7 @@ import com.dusk.module.workflow.dto.GetRelateNodeInput;
 import com.dusk.module.workflow.dto.GetRelateTaskInput;
 import com.dusk.module.workflow.dto.RelatedNodeInfo;
 import com.dusk.module.workflow.service.IWorkflowService;
-import com.dusk.workflow.dto.WorkflowTaskDetailDto;
-import com.dusk.workflow.dto.WorkflowTaskDto;
-import com.dusk.workflow.dto.WorkflowTaskHistoryDto;
+import com.dusk.workflow.dto.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.ServletOutputStream;
@@ -147,5 +145,35 @@ public class WorkflowController extends CruxBaseController {
     @GetMapping(value = "/getCurrTasksWithAssigneeInfos/{processId}")
     public List<WorkflowTaskDetailDto> getCurrTasksWithAssigneeInfos(@PathVariable("processId") String processId) {
         return workflowService.getCurrTasksWithAssigneeInfos(processId);
+    }
+
+    @Schema(description = "通用流程提交（带前置/后置处理器）")
+    @PostMapping("/genericSubmit")
+    public StartProcessOutDto genericSubmit(@RequestBody GenericSubmitInput input) {
+        return workflowService.genericSubmit(input);
+    }
+
+    @Schema(description = "通用流程审批（带前置/后置处理器）")
+    @PostMapping("/genericApproval")
+    public List<WorkflowTaskDto> genericApproval(@RequestBody GenericApprovalInput input) {
+        return workflowService.genericApproval(input);
+    }
+
+    @Schema(description = "撤回流程至上一节点")
+    @PostMapping("/recallProcess")
+    public void recallProcess(@RequestBody RecallProcessInput input) {
+        workflowService.recallProcess(input);
+    }
+
+    @Schema(description = "节点跳转")
+    @PostMapping("/jumpToNode")
+    public void jumpToNode(@RequestBody JumpToNodeInput input) {
+        workflowService.jumpToNode(input);
+    }
+
+    @Schema(description = "发送抄送通知")
+    @PostMapping("/carbonCopy")
+    public void sendCarbonCopy(@RequestBody CarbonCopyInput input) {
+        workflowService.sendCarbonCopy(input);
     }
 }

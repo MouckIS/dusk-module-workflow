@@ -20,10 +20,16 @@ import com.dusk.common.rpc.auth.service.ITodoRpcService;
 import com.dusk.common.rpc.auth.service.IUserRpcService;
 import com.dusk.module.workflow.constant.FlowableConstants;
 import com.dusk.module.workflow.dto.*;
+import com.dusk.module.workflow.event.WorkflowEventPublisher;
 import com.dusk.module.workflow.mapper.WorkflowMapper;
 import com.dusk.module.workflow.service.IWorkflowService;
+import com.dusk.module.workflow.service.WorkflowProcessorRegistry;
 import com.dusk.workflow.dto.*;
 import com.dusk.workflow.enums.AssigneeTypeEnum;
+import com.dusk.workflow.enums.WorkflowEventType;
+import com.dusk.workflow.service.IWorkflowApprovalProcessor;
+import com.dusk.workflow.service.IWorkflowRecallHandler;
+import com.dusk.workflow.service.IWorkflowSubmitProcessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
@@ -125,6 +131,14 @@ public class WorkflowServiceImpl implements IWorkflowService {
     private ITodoRpcService todoRpcService;
     @Resource
     private ObjectMapper objectMapper;
+    @Autowired
+    private WorkflowEventPublisher eventPublisher;
+    @Autowired
+    private WorkflowProcessorRegistry processorRegistry;
+    @Autowired
+    private WorkflowCarbonCopyService carbonCopyService;
+    @Autowired(required = false)
+    private List<IWorkflowRecallHandler> recallHandlers = Collections.emptyList();
 
     @Override
     @SneakyThrows
@@ -138,6 +152,18 @@ public class WorkflowServiceImpl implements IWorkflowService {
         result.setTaskInfos(tasksByProcess);
         //同步待办
         syncTodos(processInstance, tasksByProcess, mapper.workflowProcessDtoToAppPushDto(workflowProcessDto), workflowProcessDto.getBusinessData());
+        //发布流程启动事件
+        eventPublisher.publish(WorkflowEventType.PROCESS_STARTED, processInstance.getProcessInstanceId(),
+                workflowProcessDto.getProcessDefinitionKey(), workflowProcessDto.getBusinessKey(),
+                null, null, null, null, null,
+                workflowProcessDto.getVariables(), workflowProcessDto.getBusinessData());
+        //发布任务创建事件
+        for (WorkflowTaskDto task : tasksByProcess) {
+            eventPublisher.publish(WorkflowEventType.TASK_CREATED, processInstance.getProcessInstanceId(),
+                    workflowProcessDto.getProcessDefinitionKey(), workflowProcessDto.getBusinessKey(),
+                    task.getId(), task.getName(), task.getDefinitionKey(), task.getAssignee(),
+                    null, null, workflowProcessDto.getBusinessData());
+        }
         //处理代办
         return result;
     }
@@ -655,7 +681,11 @@ public class WorkflowServiceImpl implements IWorkflowService {
 
     @Override
     public void recallPre(String processInstanceId) {
-        // 1. 获取历史任务（按结束时间倒序）
+        recallPre(processInstanceId, null);
+    }
+
+    @Override
+    public void recallPre(String processInstanceId, Map<String, Object> businessData) {
         List<HistoricTaskInstance> historicTaskInstanceDesc = getHistoricTaskInstanceDesc(processInstanceId);
         // 2. 获取当前运行中的任务
         List<Task> userTasks = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
@@ -664,19 +694,44 @@ public class WorkflowServiceImpl implements IWorkflowService {
         if (!checkProcessCanRecallPre(historicTaskInstanceDesc, historicTaskInstanceDesc.getFirst().getProcessDefinitionId(), userTasks)) {
             throw new BusinessException("当前节点无法撤回");
         }
+        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
+        String fromTaskKey = userTasks.getFirst().getTaskDefinitionKey();
+        String toTaskKey = historicTaskInstanceDesc.getFirst().getTaskDefinitionKey();
 
-        String currActivityId = userTasks.getFirst().getTaskDefinitionKey();
-        String targetActivityId = historicTaskInstanceDesc.getFirst().getTaskDefinitionKey();
-
-        // 3. 执行跳转（撤回核心）
-        runtimeService.createChangeActivityStateBuilder()
-                .processInstanceId(processInstanceId)
-                .moveActivityIdTo(currActivityId, targetActivityId)
-                .changeState();
-
-        // 4. 删除意见或处理历史（Flowable 7 自动结束当前任务历史，无需手动删除运行中任务的历史）
+        ActivityImpl gotoActivity = processDefinitionEntity.findActivity(toTaskKey);
+        ActivityImpl currActivity = processDefinitionEntity.findActivity(fromTaskKey);
+        gotoAssignActivity(userTasks.getFirst(), currActivity, gotoActivity, CHEHUI);
+        //删除历史记录
         historyService.deleteHistoricTaskInstance(historicTaskInstanceDesc.getFirst().getId());
-        // 注意：currActivity 对应的历史任务在 changeState 时会被引擎自动更新/关闭
+        historyService.deleteHistoricTaskInstance(userTasks.getFirst().getId());
+
+        //同步待办
+        List<String> params = new ArrayList<>();
+        params.add(processInstanceId);
+        List<WorkflowTaskDto> tasksByProcess = getTasksByProcessAndInitAssignee(params, false);
+        syncTodos(processInstance, tasksByProcess, null, businessData);
+
+        //调用业务撤回处理器
+        String processDefinitionKey = processInstance.getProcessDefinitionKey();
+        for (IWorkflowRecallHandler handler : recallHandlers) {
+            if (processDefinitionKey.equals(handler.getProcessKey())) {
+                WorkflowRecallDto recallDto = new WorkflowRecallDto();
+                recallDto.setProcessInstanceId(processInstanceId);
+                recallDto.setBusinessKey(processInstance.getBusinessKey());
+                recallDto.setProcessDefinitionKey(processDefinitionKey);
+                recallDto.setFromTaskDefinitionKey(fromTaskKey);
+                recallDto.setToTaskDefinitionKey(toTaskKey);
+                recallDto.setOperatorId(LoginUserIdContextHolder.getUserId() != null
+                        ? LoginUserIdContextHolder.getUserId().toString() : null);
+                recallDto.setVariables(runtimeService.getVariables(processInstanceId));
+                handler.onRecall(recallDto);
+            }
+        }
+
+        //发布撤回事件
+        eventPublisher.publish(WorkflowEventType.PROCESS_RECALLED, processInstanceId,
+                processDefinitionKey, processInstance.getBusinessKey(),
+                null, null, fromTaskKey, null, CHEHUI, null, businessData);
     }
 
 
@@ -738,6 +793,24 @@ public class WorkflowServiceImpl implements IWorkflowService {
         params.add(input.getProcessInstanceId());
         List<WorkflowTaskDto> tasksByProcess = getTasksByProcessAndInitAssignee(params, false);
         syncTodos(processInstance, tasksByProcess, mapper.completeTaskInputDtoToAppPushDto(input), input.getBusinessData());
+        //发布任务完成事件
+        eventPublisher.publish(WorkflowEventType.TASK_COMPLETED, input.getProcessInstanceId(),
+                processInstance.getProcessDefinitionKey(), processInstance.getBusinessKey(),
+                input.getTaskId(), null, null, null, input.getComment(),
+                input.getVariables(), input.getBusinessData());
+        //检查流程是否结束
+        if (checkProcessEnd(input.getProcessInstanceId())) {
+            eventPublisher.publish(WorkflowEventType.PROCESS_COMPLETED, input.getProcessInstanceId(),
+                    processInstance.getProcessDefinitionKey(), processInstance.getBusinessKey());
+        } else {
+            //发布新任务创建事件
+            for (WorkflowTaskDto task : tasksByProcess) {
+                eventPublisher.publish(WorkflowEventType.TASK_CREATED, input.getProcessInstanceId(),
+                        processInstance.getProcessDefinitionKey(), processInstance.getBusinessKey(),
+                        task.getId(), task.getName(), task.getDefinitionKey(), task.getAssignee(),
+                        null, null, input.getBusinessData());
+            }
+        }
         return tasksByProcess;
     }
 
@@ -849,6 +922,155 @@ public class WorkflowServiceImpl implements IWorkflowService {
             syncTodosAssigneeChanged(processInstance, toTaskDto(updatedTasks, false), mapper.updateFlowVariablesInputToAppPushDto(input), input.getBusinessData());
         }
     }
+
+    //region 通用流程接口
+
+    @Override
+    @SneakyThrows
+    public StartProcessOutDto genericSubmit(GenericSubmitInput input) {
+        String processKey = input.getProcessDefinitionKey();
+        IWorkflowSubmitProcessor processor = processorRegistry.getSubmitProcessor(processKey);
+
+        // 前置处理器
+        if (processor != null) {
+            processor.preSubmit(input);
+        }
+
+        StartProcessOutDto result;
+        if (input.isCompleteFirst()) {
+            StartProcessInputDto startInput = new StartProcessInputDto();
+            startInput.setProcessDefinitionKey(input.getProcessDefinitionKey());
+            startInput.setBusinessKey(input.getBusinessKey());
+            startInput.setVariables(input.getVariables());
+            startInput.setTitle(input.getTitle());
+            startInput.setTypeName(input.getTypeName());
+            startInput.setType(input.getType());
+            startInput.setStarter(input.getStarter());
+            startInput.setFilterStation(input.isFilterStation());
+            startInput.setAutoAppPush(input.isAutoAppPush());
+            startInput.setPushType(input.getPushType());
+            startInput.setAppTitle(input.getAppTitle());
+            startInput.setAppBody(input.getAppBody());
+            startInput.setNoticationLevel(input.getNoticationLevel());
+            startInput.setNavigation(input.getNavigation());
+            startInput.setBusinessData(input.getBusinessData());
+            startInput.setComment(input.getComment());
+            startInput.setLocalVariables(input.getLocalVariables());
+            result = startProcessAndCompleteFirst(startInput);
+        } else {
+            result = startProcess(input);
+        }
+
+        // 后置处理器
+        if (processor != null) {
+            processor.postSubmit(result, input);
+        }
+
+        // 处理抄送
+        if (StrUtil.isNotBlank(input.getCcUserIds())) {
+            carbonCopyService.sendCarbonCopy(input.getCcUserIds(), result.getProcessInstanceId(),
+                    processKey, input.getBusinessKey(), null, input.getTitle(),
+                    StrUtil.format("【{}】提交了{}", input.getStarter(), input.getTypeName()));
+        }
+
+        return result;
+    }
+
+    @Override
+    @SneakyThrows
+    public List<WorkflowTaskDto> genericApproval(GenericApprovalInput input) {
+        ProcessInstance processInstance =
+                runtimeService.createProcessInstanceQuery().processInstanceId(input.getProcessInstanceId()).singleResult();
+        if (processInstance == null) {
+            throw new BusinessException("无法找到流程");
+        }
+        String processKey = processInstance.getProcessDefinitionKey();
+        IWorkflowApprovalProcessor processor = processorRegistry.getApprovalProcessor(processKey);
+
+        // 前置处理器
+        if (processor != null) {
+            processor.preApproval(input);
+        }
+
+        List<WorkflowTaskDto> result = completeTask(input, true);
+
+        // 后置处理器
+        if (processor != null) {
+            processor.postApproval(result, input);
+        }
+
+        // 处理抄送
+        if (StrUtil.isNotBlank(input.getCcUserIds())) {
+            carbonCopyService.sendCarbonCopy(input.getCcUserIds(), input.getProcessInstanceId(),
+                    processKey, processInstance.getBusinessKey(), input.getTaskId(),
+                    null, StrUtil.format("审批意见: {}", StrUtil.blankToDefault(input.getComment(), "无")));
+        }
+
+        return result;
+    }
+
+    @Override
+    public void recallProcess(RecallProcessInput input) {
+        recallPre(input.getProcessInstanceId(), input.getBusinessData());
+    }
+
+    @Override
+    @SneakyThrows
+    public void jumpToNode(JumpToNodeInput input) {
+        ProcessInstance processInstance =
+                runtimeService.createProcessInstanceQuery().processInstanceId(input.getProcessInstanceId()).singleResult();
+        if (processInstance == null) {
+            throw new BusinessException("流程不存在或已结束");
+        }
+
+        ProcessDefinitionEntity processDefinitionEntity =
+                (ProcessDefinitionEntity) ((RepositoryServiceImpl) repositoryService)
+                        .getDeployedProcessDefinition(processInstance.getProcessDefinitionId());
+
+        ActivityImpl targetActivity = processDefinitionEntity.findActivity(input.getTargetTaskDefinitionKey());
+        if (targetActivity == null) {
+            throw new BusinessException("目标节点不存在: " + input.getTargetTaskDefinitionKey());
+        }
+
+        List<Task> currentTasks = taskService.createTaskQuery().processInstanceId(input.getProcessInstanceId()).list();
+        if (currentTasks.isEmpty()) {
+            throw new BusinessException("当前流程没有活动任务");
+        }
+
+        // 设置变量
+        if (input.getVariables() != null && !input.getVariables().isEmpty()) {
+            runtimeService.setVariables(input.getProcessInstanceId(), input.getVariables());
+        }
+
+        // 对每个当前任务执行跳转
+        for (Task currentTask : currentTasks) {
+            ActivityImpl currActivity = processDefinitionEntity.findActivity(currentTask.getTaskDefinitionKey());
+            if (currActivity == null) {
+                continue;
+            }
+            String comment = StrUtil.blankToDefault(input.getComment(), "节点跳转");
+            gotoAssignActivity(currentTask, currActivity, targetActivity, comment);
+        }
+
+        // 同步待办
+        List<String> params = new ArrayList<>();
+        params.add(input.getProcessInstanceId());
+        List<WorkflowTaskDto> tasksByProcess = getTasksByProcessAndInitAssignee(params, false);
+        syncTodos(processInstance, tasksByProcess, null, input.getBusinessData());
+
+        // 发布跳转事件
+        eventPublisher.publish(WorkflowEventType.TASK_JUMPED, input.getProcessInstanceId(),
+                processInstance.getProcessDefinitionKey(), processInstance.getBusinessKey(),
+                null, null, input.getTargetTaskDefinitionKey(), null,
+                input.getComment(), input.getVariables(), input.getBusinessData());
+    }
+
+    @Override
+    public void sendCarbonCopy(CarbonCopyInput input) {
+        carbonCopyService.sendCarbonCopy(input);
+    }
+
+    //endregion
 
     //region private method
 

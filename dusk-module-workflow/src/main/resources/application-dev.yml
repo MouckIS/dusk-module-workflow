@@ -20,6 +20,12 @@ spring:
     enabled: false
     table: flyway_schema_history_workflow
 
+# 工作流MQ事件配置
+workflow:
+  event:
+    exchange: workflow.event.exchange
+    queue: workflow.event.queue
+
 logging:
   level:
     org.orion: ${LOGGING_LEVEL_ORION:DEBUG}

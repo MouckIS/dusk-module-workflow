@@ -6,6 +6,7 @@ import com.dusk.workflow.dto.*;
 import java.util.List;
 import java.util.Map;
 
+
 /**
  * 工作流 rpc接口
  *
@@ -141,4 +142,41 @@ public interface IWorkFlowRpcService {
      * @param input
      */
     void updateFlowVariables(UpdateFlowVariablesInput input);
+
+    /**
+     * 通用流程提交（带前置/后置处理器）
+     *
+     * @param input 提交参数
+     * @return 提交结果
+     */
+    StartProcessOutDto genericSubmit(GenericSubmitInput input);
+
+    /**
+     * 通用流程审批（带前置/后置处理器）
+     *
+     * @param input 审批参数
+     * @return 审批后产生的新任务列表
+     */
+    List<WorkflowTaskDto> genericApproval(GenericApprovalInput input);
+
+    /**
+     * 撤回流程至上一节点（带业务回调处理）
+     *
+     * @param input 撤回参数
+     */
+    void recallProcess(RecallProcessInput input);
+
+    /**
+     * 节点跳转
+     *
+     * @param input 跳转参数
+     */
+    void jumpToNode(JumpToNodeInput input);
+
+    /**
+     * 发送抄送通知
+     *
+     * @param input 抄送参数
+     */
+    void sendCarbonCopy(CarbonCopyInput input);
 }

@@ -93,4 +93,29 @@ public class WorkflowRpcServiceImpl implements IWorkFlowRpcService {
     public void updateFlowVariables(UpdateFlowVariablesInput input) {
         workflowService.updateFlowVariables(input);
     }
+
+    @Override
+    public StartProcessOutDto genericSubmit(GenericSubmitInput input) {
+        return workflowService.genericSubmit(input);
+    }
+
+    @Override
+    public List<WorkflowTaskDto> genericApproval(GenericApprovalInput input) {
+        return workflowService.genericApproval(input);
+    }
+
+    @Override
+    public void recallProcess(RecallProcessInput input) {
+        workflowService.recallProcess(input);
+    }
+
+    @Override
+    public void jumpToNode(JumpToNodeInput input) {
+        workflowService.jumpToNode(input);
+    }
+
+    @Override
+    public void sendCarbonCopy(CarbonCopyInput input) {
+        workflowService.sendCarbonCopy(input);
+    }
 }
