@@ -14,6 +14,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.flowable.bpmn.converter.BpmnXMLConverter;
+import org.flowable.bpmn.model.BpmnModel;
+import org.flowable.engine.RepositoryService;
+import org.flowable.engine.repository.Deployment;
+import org.flowable.engine.repository.Model;
+import org.flowable.engine.repository.ModelQuery;
+import org.flowable.engine.repository.ProcessDefinition;
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.converter.BpmnXMLConverter;
 import org.flowable.bpmn.model.BpmnModel;
@@ -189,8 +196,8 @@ public class ModelServiceImpl implements IModelService {
     @SneakyThrows
     public String convertInputStreamToModel(InputStream is) {
         XMLInputFactory xif = XMLInputFactory.newInstance();
-        InputStreamReader isr = null;
-        XMLStreamReader xtr = null;
+        InputStreamReader isr;
+        XMLStreamReader xtr;
         isr = new InputStreamReader(is, StandardCharsets.UTF_8);
         xtr = xif.createXMLStreamReader(isr);
         BpmnModel bpmnModel = new BpmnXMLConverter().convertToBpmnModel(xtr);

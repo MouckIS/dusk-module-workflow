@@ -9,7 +9,6 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.dusk</groupId>
     <artifactId>dusk-module-workflow-group</artifactId>
     <packaging>pom</packaging>
 

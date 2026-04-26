@@ -18,12 +18,16 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.flowable</groupId>
-            <artifactId>flowable-spring-boot-starter</artifactId>
+            <artifactId>flowable-spring-boot-starter-process</artifactId>
+            <version>7.2.0</version>
         </dependency>
-
+        <!-- <dependency> -->
+        <!--     <groupId>org.flowable</groupId> -->
+        <!--     <artifactId>flowable-json-converter</artifactId> -->
+        <!--     <version>5.23.0</version> -->
+        <!-- </dependency> -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
@@ -32,6 +36,10 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>druid-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dusk</groupId>
+            <artifactId>dusk-common-core</artifactId>
         </dependency>
         <dependency>
             <groupId>com.dusk</groupId>

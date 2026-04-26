@@ -85,5 +85,9 @@ public class WorkflowEventDto implements Serializable {
      * 事件时间
      */
     private LocalDateTime timestamp;
+    /**
+     * 分布式追踪ID
+     */
+    private String traceId;
 }
 

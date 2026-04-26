@@ -24,7 +24,11 @@ import com.dusk.module.workflow.event.WorkflowEventPublisher;
 import com.dusk.module.workflow.mapper.WorkflowMapper;
 import com.dusk.module.workflow.service.IWorkflowService;
 import com.dusk.module.workflow.service.WorkflowProcessorRegistry;
+import com.dusk.module.workflow.callback.WorkflowCallbackRegistry;
 import com.dusk.workflow.dto.*;
+import com.dusk.workflow.dto.callback.WorkflowCallbackContext;
+import com.dusk.workflow.dto.callback.WorkflowCallbackResult;
+import com.dusk.workflow.dto.callback.WorkflowPhase;
 import com.dusk.workflow.enums.AssigneeTypeEnum;
 import com.dusk.workflow.enums.WorkflowEventType;
 import com.dusk.workflow.service.IWorkflowApprovalProcessor;
@@ -35,58 +39,56 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-//import org.activiti.bpmn.model.BpmnModel;
-//import org.activiti.engine.*;
-//import org.activiti.engine.delegate.Expression;
-//import org.activiti.engine.form.FormProperty;
-//import org.activiti.engine.form.TaskFormData;
-//import org.activiti.engine.history.HistoricActivityInstance;
-//import org.activiti.engine.history.HistoricProcessInstance;
-//import org.activiti.engine.history.HistoricTaskInstance;
-//import org.activiti.engine.history.HistoricVariableInstance;
-//import org.activiti.engine.impl.RepositoryServiceImpl;
-//import org.activiti.engine.impl.bpmn.behavior.UserTaskActivityBehavior;
-//import org.activiti.engine.impl.form.DefaultStartFormHandler;
-//import org.activiti.engine.impl.javax.el.ExpressionFactory;
-//import org.activiti.engine.impl.javax.el.ValueExpression;
-//import org.activiti.engine.impl.juel.ExpressionFactoryImpl;
-//import org.activiti.engine.impl.juel.SimpleContext;
-//import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
-//import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
-//import org.activiti.engine.impl.pvm.PvmActivity;
-//import org.activiti.engine.impl.pvm.PvmTransition;
-//import org.activiti.engine.impl.pvm.process.ActivityImpl;
-//import org.activiti.engine.impl.pvm.process.TransitionImpl;
-//import org.activiti.engine.impl.task.TaskDefinition;
-//import org.activiti.engine.repository.ProcessDefinition;
-//import org.activiti.engine.runtime.ProcessInstance;
-//import org.activiti.engine.task.*;
-//import org.activiti.image.ProcessDiagramGenerator;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.dubbo.config.annotation.DubboReference;
-import org.flowable.bpmn.model.*;
+import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.common.engine.impl.de.odysseus.el.ExpressionFactoryImpl;
 import org.flowable.common.engine.impl.de.odysseus.el.util.SimpleContext;
+import org.flowable.common.engine.impl.javax.el.Expression;
 import org.flowable.common.engine.impl.javax.el.ExpressionFactory;
 import org.flowable.common.engine.impl.javax.el.ValueExpression;
 import org.flowable.engine.*;
+//import org.flowable.engine.delegate.Expression;
 import org.flowable.engine.form.FormProperty;
 import org.flowable.engine.form.TaskFormData;
 import org.flowable.engine.history.HistoricActivityInstance;
 import org.flowable.engine.history.HistoricProcessInstance;
+//import org.flowable.engine.history.HistoricTaskInstance;
+//import org.flowable.engine.history.HistoricVariableInstance;
 import org.flowable.engine.impl.RepositoryServiceImpl;
+import org.flowable.engine.impl.bpmn.behavior.UserTaskActivityBehavior;
+import org.flowable.engine.impl.form.DefaultStartFormHandler;
+//import org.flowable.engine.impl.javax.el.ExpressionFactory;
+//import org.flowable.engine.impl.javax.el.ValueExpression;
+//import org.flowable.engine.impl.juel.ExpressionFactoryImpl;
+//import org.flowable.engine.impl.juel.SimpleContext;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
 import org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntity;
+//import org.flowable.engine.impl.pvm.PvmActivity;
+//import org.flowable.engine.impl.pvm.PvmTransition;
+//import org.flowable.engine.impl.pvm.process.ActivityImpl;
+//import org.flowable.engine.impl.pvm.process.TransitionImpl;
+//import org.flowable.engine.impl.task.TaskDefinition;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
-import org.flowable.engine.task.Comment;
+import org.flowable.engine.task.*;
 import org.flowable.identitylink.api.IdentityLink;
 import org.flowable.identitylink.api.IdentityLinkType;
 import org.flowable.image.ProcessDiagramGenerator;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.dubbo.config.annotation.DubboReference;
+import org.flowable.bpmn.model.*;
 import org.flowable.task.api.Task;
 import org.flowable.task.api.TaskInfo;
 import org.flowable.task.api.history.HistoricTaskInstance;
 import org.flowable.variable.api.history.HistoricVariableInstance;
+import org.flowable.bpmn.model.*;
+import org.flowable.bpmn.model.BpmnModel;
+import org.flowable.common.engine.impl.de.odysseus.el.ExpressionFactoryImpl;
+import org.flowable.common.engine.impl.javax.el.Expression;
+import org.flowable.engine.history.HistoricActivityInstance;
+import org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntity;
+import org.flowable.identitylink.api.IdentityLinkType;
+import org.flowable.task.api.Task;
+import org.flowable.task.api.TaskInfo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -143,6 +145,9 @@ public class WorkflowServiceImpl implements IWorkflowService {
     /** 撤回业务处理器列表 —— 各业务模块注册的IWorkflowRecallHandler实现 */
     @Autowired(required = false)
     private List<IWorkflowRecallHandler> recallHandlers = Collections.emptyList();
+    /** 回调服务注册中心 —— 管理业务服务的IWorkflowCallbackRpcService实现 */
+    @Autowired
+    private WorkflowCallbackRegistry callbackRegistry;
 
     @Override
     @SneakyThrows
@@ -212,7 +217,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         // 获得当前活动的节点
         if (isFinished(processInstanceId)) {
             // 如果流程已经结束，则得到结束节点
-             activeActivityIds = historicActivityInstances.stream().map(HistoricActivityInstance::getActivityId)
+             activeActivityIds = historicActivityInstances.stream().map(org.flowable.engine.history.HistoricActivityInstance::getActivityId)
              .collect(Collectors.toList());
 
         } else {
@@ -329,16 +334,16 @@ public class WorkflowServiceImpl implements IWorkflowService {
         if (pd == null) {
             throw new BusinessException("不存在名为" + processKey + "的流程或者尚未发布");
         }
-        ProcessDefinitionEntity processDefinition =
-                (ProcessDefinitionEntity) ((RepositoryServiceImpl) repositoryService).getDeployedProcessDefinition(pd.getId());
-
-        if (processDefinition == null) {
+        org.flowable.bpmn.model.BpmnModel bpmnModel = repositoryService.getBpmnModel(pd.getId());
+        if (bpmnModel == null) {
             throw new BusinessException("流程尚未发布");
         }
-
-        if (processDefinition.getHasStartFormKey()) {
-            //return ((DefaultStartFormHandler) processDefinition.getStartFormHandler()).getFormKey().getExpressionText();
-            formService.getStartFormKey(processDefinition.getId());
+        StartEvent startEvent = bpmnModel.getMainProcess().findFlowElementsOfType(StartEvent.class, true)
+                .stream()
+                .findFirst()
+                .orElse(null);
+        if (startEvent != null) {
+            return startEvent.getFormKey();
         }
         return null;
     }
@@ -458,20 +463,10 @@ public class WorkflowServiceImpl implements IWorkflowService {
         //当前流程节点Id信息
         String activitiId = execution.getActivityId();
 
-        ////获取流程所有节点信息
-        //List<ActivityImpl> activitiList = processDefinitionEntity.getActivities();
-        //
-        ////遍历所有节点信息
-        //for (ActivityImpl activityImpl : activitiList) {
-        //    String id = activityImpl.getId();
-        //    if (activitiId.equals(id)) {
-        //        //获取下一个节点信息
-        //        task = nextTaskDefinition(activityImpl, activityImpl.getId(), variables);
-        //        break;
-        //    }
-        //}
+        //获取流程所有节点信息
+        List<ActivityImpl> activitiList = getActivities(processDefinitionEntity);
 
-        BpmnModel bpmnModel = repositoryService.getBpmnModel(definitionId);
+        org.flowable.bpmn.model.BpmnModel bpmnModel = repositoryService.getBpmnModel(definitionId);
         FlowElement flowElement = bpmnModel.getFlowElement(activitiId);
         if (flowElement instanceof FlowNode) {
             task = nextTaskDefinition(flowElement, activitiId, variables);
@@ -719,11 +714,29 @@ public class WorkflowServiceImpl implements IWorkflowService {
             throw new BusinessException("当前节点无法撤回");
         }
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
+        String processDefinitionKey = processInstance.getProcessDefinitionKey();
         String fromTaskKey = userTasks.getFirst().getTaskDefinitionKey();
         String toTaskKey = historicTaskInstanceDesc.getFirst().getTaskDefinitionKey();
 
-        ActivityImpl gotoActivity = processDefinitionEntity.findActivity(toTaskKey);
-        ActivityImpl currActivity = processDefinitionEntity.findActivity(fromTaskKey);
+        // === 前置回调（新增）===
+        WorkflowCallbackContext beforeContext = WorkflowCallbackContext.builder()
+                .processDefinitionKey(processDefinitionKey)
+                .businessKey(processInstance.getBusinessKey())
+                .processInstanceId(processInstanceId)
+                .taskId(userTasks.getFirst().getId())
+                .phase(WorkflowPhase.RECALL)
+                .variables(runtimeService.getVariables(processInstanceId))
+                .businessData(businessData)
+                .build();
+
+        WorkflowCallbackResult beforeResult = callbackRegistry.invokeBeforeCallback(
+                processDefinitionKey, beforeContext, service -> service.onBeforeRecall(beforeContext));
+        if (beforeResult != null && !beforeResult.isProceed()) {
+            throw new BusinessException("业务校验失败: " + beforeResult.getRejectReason());
+        }
+
+        ActivityImpl gotoActivity = findActivity(processDefinitionEntity, toTaskKey);
+        ActivityImpl currActivity = findActivity(processDefinitionEntity, fromTaskKey);
         gotoAssignActivity(userTasks.getFirst(), currActivity, gotoActivity, CHEHUI);
         //删除历史记录
         historyService.deleteHistoricTaskInstance(historicTaskInstanceDesc.getFirst().getId());
@@ -735,8 +748,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         List<WorkflowTaskDto> tasksByProcess = getTasksByProcessAndInitAssignee(params, false);
         syncTodos(processInstance, tasksByProcess, null, businessData);
 
-        //调用业务撤回处理器 —— 遍历所有IWorkflowRecallHandler，匹配processKey后执行onRecall回调
-        String processDefinitionKey = processInstance.getProcessDefinitionKey();
+        //调用业务撤回处理器 —— 遍历所有IWorkflowRecallHandler，匹配processKey后执行onRecall回调（兼容旧逻辑）
         for (IWorkflowRecallHandler handler : recallHandlers) {
             if (processDefinitionKey.equals(handler.getProcessKey())) {
                 WorkflowRecallDto recallDto = new WorkflowRecallDto();
@@ -751,6 +763,18 @@ public class WorkflowServiceImpl implements IWorkflowService {
                 handler.onRecall(recallDto);
             }
         }
+
+        // === 后置回调（新增）===
+        WorkflowCallbackContext afterContext = WorkflowCallbackContext.builder()
+                .processDefinitionKey(processDefinitionKey)
+                .businessKey(processInstance.getBusinessKey())
+                .processInstanceId(processInstanceId)
+                .phase(WorkflowPhase.RECALL)
+                .variables(runtimeService.getVariables(processInstanceId))
+                .businessData(businessData)
+                .processEnded(false)
+                .build();
+        callbackRegistry.invokeAfterCallback(processDefinitionKey, afterContext, service -> service.onAfterRecall(afterContext));
 
         //发布撤回事件
         eventPublisher.publish(WorkflowEventType.PROCESS_RECALLED, processInstanceId,
@@ -886,7 +910,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         runtimeService.setVariables(input.getProcessInstanceId(), variables);
 
         // 3. 获取 BPMN 模型解析代理人表达式
-        BpmnModel bpmnModel = repositoryService.getBpmnModel(processInstance.getProcessDefinitionId());
+        org.flowable.bpmn.model.BpmnModel bpmnModel = repositoryService.getBpmnModel(processInstance.getProcessDefinitionId());
         List<Task> tasks = taskService.createTaskQuery().processInstanceId(input.getProcessInstanceId()).list();
         List<Task> updatedTasks = new ArrayList<>();
         Map<String, Object> currVariables = runtimeService.getVariables(input.getProcessInstanceId());
@@ -972,7 +996,34 @@ public class WorkflowServiceImpl implements IWorkflowService {
         String processKey = input.getProcessDefinitionKey();
         IWorkflowSubmitProcessor processor = processorRegistry.getSubmitProcessor(processKey);
 
-        // 前置处理器
+        // === 前置回调（新增）===
+        // 构建回调上下文
+        WorkflowCallbackContext beforeContext = WorkflowCallbackContext.builder()
+                .processDefinitionKey(processKey)
+                .businessKey(input.getBusinessKey())
+                .phase(WorkflowPhase.SUBMIT)
+                .variables(new HashMap<>(input.getVariables() != null ? input.getVariables() : Collections.emptyMap()))
+                .businessData(input.getBusinessData())
+                .build();
+
+        // 调用业务服务的 onBeforeSubmit 回调
+        WorkflowCallbackResult beforeResult = callbackRegistry.invokeBeforeCallback(
+                processKey, beforeContext, service -> service.onBeforeSubmit(beforeContext));
+        if (beforeResult != null) {
+            // 检查是否允许继续
+            if (!beforeResult.isProceed()) {
+                throw new BusinessException("业务校验失败: " + beforeResult.getRejectReason());
+            }
+            // 合并回调返回的变量修改
+            if (beforeResult.getVariables() != null && !beforeResult.getVariables().isEmpty()) {
+                if (input.getVariables() == null) {
+                    input.setVariables(new HashMap<>());
+                }
+                input.getVariables().putAll(beforeResult.getVariables());
+            }
+        }
+
+        // 前置处理器（兼容旧逻辑）
         if (processor != null) {
             processor.preSubmit(input);
         }
@@ -1002,10 +1053,22 @@ public class WorkflowServiceImpl implements IWorkflowService {
             result = startProcess(input);
         }
 
-        // 后置处理器
+        // 后置处理器（兼容旧逻辑）
         if (processor != null) {
             processor.postSubmit(result, input);
         }
+
+        // === 后置回调（新增）===
+        WorkflowCallbackContext afterContext = WorkflowCallbackContext.builder()
+                .processDefinitionKey(processKey)
+                .businessKey(input.getBusinessKey())
+                .processInstanceId(result.getProcessInstanceId())
+                .phase(WorkflowPhase.SUBMIT)
+                .variables(input.getVariables())
+                .businessData(input.getBusinessData())
+                .processEnded(false)
+                .build();
+        callbackRegistry.invokeAfterCallback(processKey, afterContext, service -> service.onAfterSubmit(afterContext));
 
         // 处理抄送
         if (StrUtil.isNotBlank(input.getCcUserIds())) {
@@ -1042,17 +1105,60 @@ public class WorkflowServiceImpl implements IWorkflowService {
         String processKey = processInstance.getProcessDefinitionKey();
         IWorkflowApprovalProcessor processor = processorRegistry.getApprovalProcessor(processKey);
 
-        // 前置处理器
+        // === 前置回调（新增）===
+        WorkflowCallbackContext beforeContext = WorkflowCallbackContext.builder()
+                .processDefinitionKey(processKey)
+                .businessKey(processInstance.getBusinessKey())
+                .processInstanceId(input.getProcessInstanceId())
+                .taskId(input.getTaskId())
+                .phase(WorkflowPhase.APPROVAL)
+                .variables(new HashMap<>(input.getVariables() != null ? input.getVariables() : Collections.emptyMap()))
+                .businessData(input.getBusinessData())
+                .build();
+
+        WorkflowCallbackResult beforeResult = callbackRegistry.invokeBeforeCallback(
+                processKey, beforeContext, service -> service.onBeforeApproval(beforeContext));
+        if (beforeResult != null) {
+            // 检查是否允许继续
+            if (!beforeResult.isProceed()) {
+                throw new BusinessException("业务校验失败: " + beforeResult.getRejectReason());
+            }
+            // 合并回调返回的变量修改
+            if (beforeResult.getVariables() != null && !beforeResult.getVariables().isEmpty()) {
+                if (input.getVariables() == null) {
+                    input.setVariables(new HashMap<>());
+                }
+                input.getVariables().putAll(beforeResult.getVariables());
+            }
+        }
+
+        // 前置处理器（兼容旧逻辑）
         if (processor != null) {
             processor.preApproval(input);
         }
 
         List<WorkflowTaskDto> result = completeTask(input, true);
 
-        // 后置处理器
+        // 后置处理器（兼容旧逻辑）
         if (processor != null) {
             processor.postApproval(result, input);
         }
+
+        // === 后置回调（新增）===
+        // 判断流程是否结束
+        boolean processEnded = result == null || result.isEmpty();
+
+        WorkflowCallbackContext afterContext = WorkflowCallbackContext.builder()
+                .processDefinitionKey(processKey)
+                .businessKey(processInstance.getBusinessKey())
+                .processInstanceId(input.getProcessInstanceId())
+                .taskId(input.getTaskId())
+                .phase(WorkflowPhase.APPROVAL)
+                .variables(input.getVariables())
+                .businessData(input.getBusinessData())
+                .processEnded(processEnded)
+                .build();
+        callbackRegistry.invokeAfterCallback(processKey, afterContext, service -> service.onAfterApproval(afterContext));
 
         // 处理抄送
         if (StrUtil.isNotBlank(input.getCcUserIds())) {
@@ -1104,11 +1210,13 @@ public class WorkflowServiceImpl implements IWorkflowService {
             throw new BusinessException("流程不存在或已结束");
         }
 
+        String processDefinitionKey = processInstance.getProcessDefinitionKey();
+
         ProcessDefinitionEntity processDefinitionEntity =
                 (ProcessDefinitionEntity) ((RepositoryServiceImpl) repositoryService)
                         .getDeployedProcessDefinition(processInstance.getProcessDefinitionId());
 
-        ActivityImpl targetActivity = processDefinitionEntity.findActivity(input.getTargetTaskDefinitionKey());
+        ActivityImpl targetActivity = findActivity(processDefinitionEntity, input.getTargetTaskDefinitionKey());
         if (targetActivity == null) {
             throw new BusinessException("目标节点不存在: " + input.getTargetTaskDefinitionKey());
         }
@@ -1118,6 +1226,32 @@ public class WorkflowServiceImpl implements IWorkflowService {
             throw new BusinessException("当前流程没有活动任务");
         }
 
+        // === 前置回调（新增）===
+        WorkflowCallbackContext beforeContext = WorkflowCallbackContext.builder()
+                .processDefinitionKey(processDefinitionKey)
+                .businessKey(processInstance.getBusinessKey())
+                .processInstanceId(input.getProcessInstanceId())
+                .taskId(currentTasks.getFirst().getId())
+                .phase(WorkflowPhase.JUMP)
+                .variables(new HashMap<>(input.getVariables() != null ? input.getVariables() : Collections.emptyMap()))
+                .businessData(input.getBusinessData())
+                .build();
+
+        WorkflowCallbackResult beforeResult = callbackRegistry.invokeBeforeCallback(
+                processDefinitionKey, beforeContext, service -> WorkflowCallbackResult.proceed());
+        if (beforeResult != null) {
+            if (!beforeResult.isProceed()) {
+                throw new BusinessException("业务校验失败: " + beforeResult.getRejectReason());
+            }
+            // 合并变量修改
+            if (beforeResult.getVariables() != null && !beforeResult.getVariables().isEmpty()) {
+                if (input.getVariables() == null) {
+                    input.setVariables(new HashMap<>());
+                }
+                input.getVariables().putAll(beforeResult.getVariables());
+            }
+        }
+
         // 设置变量
         if (input.getVariables() != null && !input.getVariables().isEmpty()) {
             runtimeService.setVariables(input.getProcessInstanceId(), input.getVariables());
@@ -1125,7 +1259,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
 
         // 对每个当前任务执行跳转
         for (Task currentTask : currentTasks) {
-            ActivityImpl currActivity = processDefinitionEntity.findActivity(currentTask.getTaskDefinitionKey());
+            ActivityImpl currActivity = findActivity(processDefinitionEntity, currentTask.getTaskDefinitionKey());
             if (currActivity == null) {
                 continue;
             }
@@ -1138,6 +1272,18 @@ public class WorkflowServiceImpl implements IWorkflowService {
         params.add(input.getProcessInstanceId());
         List<WorkflowTaskDto> tasksByProcess = getTasksByProcessAndInitAssignee(params, false);
         syncTodos(processInstance, tasksByProcess, null, input.getBusinessData());
+
+        // === 后置回调（新增）===
+        WorkflowCallbackContext afterContext = WorkflowCallbackContext.builder()
+                .processDefinitionKey(processDefinitionKey)
+                .businessKey(processInstance.getBusinessKey())
+                .processInstanceId(input.getProcessInstanceId())
+                .phase(WorkflowPhase.JUMP)
+                .variables(input.getVariables())
+                .businessData(input.getBusinessData())
+                .processEnded(false)
+                .build();
+        callbackRegistry.invokeAfterCallback(processDefinitionKey, afterContext, service -> service.onAfterJump(afterContext));
 
         // 发布跳转事件
         eventPublisher.publish(WorkflowEventType.TASK_JUMPED, input.getProcessInstanceId(),
@@ -1738,6 +1884,37 @@ public class WorkflowServiceImpl implements IWorkflowService {
         return false;
     }
 
+    private List<ActivityImpl> getActivities(org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntity processDefinitionEntity) {
+        org.flowable.bpmn.model.BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionEntity.getId());
+        if (bpmnModel == null || bpmnModel.getMainProcess() == null) {
+            return Collections.emptyList();
+        }
+        return bpmnModel.getMainProcess().findFlowElementsOfType(FlowNode.class, true).stream()
+                .map(ActivityImpl::new)
+                .toList();
+    }
+
+    private ActivityImpl findActivity(org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntity processDefinitionEntity, String activityId) {
+        org.flowable.bpmn.model.BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionEntity.getId());
+        if (bpmnModel == null || bpmnModel.getMainProcess() == null) {
+            return null;
+        }
+        FlowElement flowElement = bpmnModel.getMainProcess().getFlowElement(activityId, true);
+        if (!(flowElement instanceof FlowNode flowNode)) {
+            return null;
+        }
+        return new ActivityImpl(flowNode);
+    }
+
+    private Map<String, TaskDefinition> getTaskDefinitions(org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntity processDefinitionEntity) {
+        org.flowable.bpmn.model.BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionEntity.getId());
+        if (bpmnModel == null || bpmnModel.getMainProcess() == null) {
+            return Collections.emptyMap();
+        }
+        return bpmnModel.getMainProcess().findFlowElementsOfType(UserTask.class, true).stream()
+                .collect(Collectors.toMap(UserTask::getId, TaskDefinition::new, (a, b) -> a));
+    }
+
     private List<HistoricTaskInstance> getHistoricTaskInstanceDesc(String processInstanceId) {
         return historyService.createHistoricTaskInstanceQuery().processUnfinished().processInstanceId(processInstanceId).finished().orderByTaskCreateTime().desc().list();
     }
@@ -1745,5 +1922,156 @@ public class WorkflowServiceImpl implements IWorkflowService {
     private ProcessDefinitionEntity getProcessDefinitionEntity(String processInstanceId) {
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
         return (ProcessDefinitionEntity) repositoryService.getProcessDefinition(processInstance.getProcessDefinitionId());
+    }
+
+    private static class TaskDefinition {
+        private final UserTask userTask;
+
+        private TaskDefinition(UserTask userTask) {
+            this.userTask = userTask;
+        }
+
+        public String getKey() {
+            return userTask.getId();
+        }
+
+        public org.flowable.common.engine.impl.javax.el.Expression getNameExpression() {
+            return buildExpression(userTask.getName());
+        }
+
+        public org.flowable.common.engine.impl.javax.el.Expression getDescriptionExpression() {
+            return buildExpression(userTask.getDocumentation());
+        }
+
+        public org.flowable.common.engine.impl.javax.el.Expression getAssigneeExpression() {
+            return buildExpression(userTask.getAssignee());
+        }
+
+        public org.flowable.common.engine.impl.javax.el.Expression getOwnerExpression() {
+            return buildExpression(userTask.getOwner());
+        }
+
+        public org.flowable.common.engine.impl.javax.el.Expression getFormKeyExpression() {
+            return buildExpression(userTask.getFormKey());
+        }
+
+        public Set<org.flowable.common.engine.impl.javax.el.Expression> getCandidateUserIdExpressions() {
+            return buildExpressions(userTask.getCandidateUsers());
+        }
+
+        public Set<org.flowable.common.engine.impl.javax.el.Expression> getCandidateGroupIdExpressions() {
+            return buildExpressions(userTask.getCandidateGroups());
+        }
+
+        private org.flowable.common.engine.impl.javax.el.Expression buildExpression(String value) {
+            if (StrUtil.isBlank(value)) {
+                return null;
+            }
+            return new org.flowable.common.engine.impl.de.odysseus.el.ExpressionFactoryImpl().createValueExpression(value, String.class);
+        }
+
+        private Set<org.flowable.common.engine.impl.javax.el.Expression> buildExpressions(List<String> values) {
+            if (values == null || values.isEmpty()) {
+                return null;
+            }
+            Set<org.flowable.common.engine.impl.javax.el.Expression> set = new LinkedHashSet<>();
+            org.flowable.common.engine.impl.de.odysseus.el.ExpressionFactoryImpl expressionFactory = new org.flowable.common.engine.impl.de.odysseus.el.ExpressionFactoryImpl();
+            for (String value : values) {
+                if (StrUtil.isBlank(value)) {
+                    continue;
+                }
+                set.add(expressionFactory.createValueExpression(value, String.class));
+            }
+            return set.isEmpty() ? null : set;
+        }
+    }
+
+    private interface PvmActivity {
+        Object getProperty(String name);
+
+        List<PvmTransition> getOutgoingTransitions();
+    }
+
+    private static class ActivityImpl implements PvmActivity {
+        private final FlowNode flowNode;
+
+        private ActivityImpl(FlowNode flowNode) {
+            this.flowNode = flowNode;
+        }
+
+        public String getId() {
+            return flowNode.getId();
+        }
+
+        @Override
+        public Object getProperty(String name) {
+            return switch (name) {
+                case "type" -> resolveType();
+                case "taskDefinition" -> flowNode instanceof UserTask userTask ? new TaskDefinition(userTask) : null;
+                case "default" -> flowNode instanceof ExclusiveGateway gateway ? gateway.getDefaultFlow() : null;
+                case "multiInstance" -> flowNode instanceof UserTask userTask && userTask.getLoopCharacteristics() != null
+                        ? userTask.getLoopCharacteristics() : null;
+                default -> null;
+            };
+        }
+
+        public Object getActivityBehavior() {
+            return flowNode;
+        }
+
+        @Override
+        public List<PvmTransition> getOutgoingTransitions() {
+            List<SequenceFlow> sequenceFlows = flowNode.getOutgoingFlows();
+            if (sequenceFlows == null || sequenceFlows.isEmpty()) {
+                return Collections.emptyList();
+            }
+            return sequenceFlows.stream().map(PvmTransition::new).collect(Collectors.toList());
+        }
+
+        private String resolveType() {
+            if (flowNode instanceof UserTask) {
+                return "userTask";
+            }
+            if (flowNode instanceof ExclusiveGateway) {
+                return "exclusiveGateway";
+            }
+            if (flowNode instanceof ParallelGateway) {
+                return "parallelGateway";
+            }
+            if (flowNode instanceof EndEvent) {
+                return "endEvent";
+            }
+            if (flowNode instanceof StartEvent) {
+                return "startEvent";
+            }
+            return flowNode.getClass().getSimpleName();
+        }
+    }
+
+    private static class PvmTransition {
+        private final SequenceFlow sequenceFlow;
+
+        private PvmTransition(SequenceFlow sequenceFlow) {
+            this.sequenceFlow = sequenceFlow;
+        }
+
+        public String getId() {
+            return sequenceFlow.getId();
+        }
+
+        public PvmActivity getDestination() {
+            if (!(sequenceFlow.getTargetFlowElement() instanceof FlowNode flowNode)) {
+                return null;
+            }
+            return new ActivityImpl(flowNode);
+        }
+
+        public Object getProperty(String name) {
+            return switch (name) {
+                case "conditionText" -> sequenceFlow.getConditionExpression();
+                case "name" -> sequenceFlow.getName();
+                default -> null;
+            };
+        }
     }
 }

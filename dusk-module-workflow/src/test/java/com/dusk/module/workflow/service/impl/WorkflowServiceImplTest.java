@@ -21,27 +21,27 @@ import com.dusk.workflow.service.IWorkflowApprovalProcessor;
 import com.dusk.workflow.service.IWorkflowRecallHandler;
 import com.dusk.workflow.service.IWorkflowSubmitProcessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.activiti.engine.*;
-import org.activiti.engine.form.FormProperty;
-import org.activiti.engine.form.TaskFormData;
-import org.activiti.engine.history.*;
-import org.activiti.engine.impl.RepositoryServiceImpl;
-import org.activiti.engine.impl.bpmn.behavior.UserTaskActivityBehavior;
-import org.activiti.engine.impl.form.DefaultStartFormHandler;
-import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
-import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
-import org.activiti.engine.impl.pvm.PvmTransition;
-import org.activiti.engine.impl.pvm.process.ActivityImpl;
-import org.activiti.engine.impl.pvm.process.TransitionImpl;
-import org.activiti.engine.impl.task.TaskDefinition;
-import org.activiti.engine.repository.ProcessDefinition;
-import org.activiti.engine.repository.ProcessDefinitionQuery;
-import org.activiti.engine.runtime.ExecutionQuery;
-import org.activiti.engine.runtime.ProcessInstance;
-import org.activiti.engine.runtime.ProcessInstanceQuery;
-import org.activiti.engine.task.*;
-import org.activiti.image.ProcessDiagramGenerator;
-import org.activiti.engine.delegate.Expression;
+import org.flowable.engine.*;
+import org.flowable.engine.form.FormProperty;
+import org.flowable.engine.form.TaskFormData;
+import org.flowable.engine.history.*;
+import org.flowable.engine.impl.RepositoryServiceImpl;
+import org.flowable.engine.impl.bpmn.behavior.UserTaskActivityBehavior;
+import org.flowable.engine.impl.form.DefaultStartFormHandler;
+import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
+import org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntity;
+import org.flowable.engine.impl.pvm.PvmTransition;
+import org.flowable.engine.impl.pvm.process.ActivityImpl;
+import org.flowable.engine.impl.pvm.process.TransitionImpl;
+import org.flowable.engine.impl.task.TaskDefinition;
+import org.flowable.engine.repository.ProcessDefinition;
+import org.flowable.engine.repository.ProcessDefinitionQuery;
+import org.flowable.engine.runtime.ExecutionQuery;
+import org.flowable.engine.runtime.ProcessInstance;
+import org.flowable.engine.runtime.ProcessInstanceQuery;
+import org.flowable.engine.task.*;
+import org.flowable.image.ProcessDiagramGenerator;
+import org.flowable.engine.delegate.Expression;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -956,7 +956,7 @@ class WorkflowServiceImplTest {
         when(haiq.singleResult()).thenReturn(endActivity);
 
         // BpmnModel
-        when(repositoryService.getBpmnModel("defId1")).thenReturn(mock(org.activiti.bpmn.model.BpmnModel.class));
+        when(repositoryService.getBpmnModel("defId1")).thenReturn(mock(org.flowable.bpmn.model.BpmnModel.class));
 
         ProcessDiagramGenerator diagramGen = mock(ProcessDiagramGenerator.class);
         when(processEngineConfiguration.getProcessDiagramGenerator()).thenReturn(diagramGen);
@@ -997,7 +997,7 @@ class WorkflowServiceImplTest {
         // active activities
         when(runtimeService.getActiveActivityIds("proc1")).thenReturn(new ArrayList<>(List.of("activity1")));
 
-        when(repositoryService.getBpmnModel("defId1")).thenReturn(mock(org.activiti.bpmn.model.BpmnModel.class));
+        when(repositoryService.getBpmnModel("defId1")).thenReturn(mock(org.flowable.bpmn.model.BpmnModel.class));
 
         ProcessDiagramGenerator diagramGen = mock(ProcessDiagramGenerator.class);
         when(processEngineConfiguration.getProcessDiagramGenerator()).thenReturn(diagramGen);
