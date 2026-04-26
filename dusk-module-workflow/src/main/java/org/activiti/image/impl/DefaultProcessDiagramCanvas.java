@@ -15,8 +15,8 @@ package org.activiti.image.impl;
 
 import org.flowable.bpmn.model.AssociationDirection;
 import org.flowable.bpmn.model.GraphicInfo;
-import org.flowable.cmmn.image.util.ReflectUtil;
 import org.flowable.image.exception.FlowableImageException;
+import org.flowable.image.util.ReflectUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

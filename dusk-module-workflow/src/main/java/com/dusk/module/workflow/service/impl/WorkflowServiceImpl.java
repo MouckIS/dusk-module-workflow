@@ -18,13 +18,13 @@ import com.dusk.common.rpc.auth.dto.UserFullListDto;
 import com.dusk.common.rpc.auth.enums.ToDoTargetType;
 import com.dusk.common.rpc.auth.service.ITodoRpcService;
 import com.dusk.common.rpc.auth.service.IUserRpcService;
+import com.dusk.module.workflow.callback.WorkflowCallbackRegistry;
 import com.dusk.module.workflow.constant.FlowableConstants;
 import com.dusk.module.workflow.dto.*;
 import com.dusk.module.workflow.event.WorkflowEventPublisher;
 import com.dusk.module.workflow.mapper.WorkflowMapper;
 import com.dusk.module.workflow.service.IWorkflowService;
 import com.dusk.module.workflow.service.WorkflowProcessorRegistry;
-import com.dusk.module.workflow.callback.WorkflowCallbackRegistry;
 import com.dusk.workflow.dto.*;
 import com.dusk.workflow.dto.callback.WorkflowCallbackContext;
 import com.dusk.workflow.dto.callback.WorkflowCallbackResult;
@@ -39,56 +39,31 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.flowable.bpmn.model.BpmnModel;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.dubbo.config.annotation.DubboReference;
+import org.flowable.bpmn.model.*;
 import org.flowable.common.engine.impl.de.odysseus.el.ExpressionFactoryImpl;
 import org.flowable.common.engine.impl.de.odysseus.el.util.SimpleContext;
-import org.flowable.common.engine.impl.javax.el.Expression;
 import org.flowable.common.engine.impl.javax.el.ExpressionFactory;
 import org.flowable.common.engine.impl.javax.el.ValueExpression;
 import org.flowable.engine.*;
-//import org.flowable.engine.delegate.Expression;
 import org.flowable.engine.form.FormProperty;
 import org.flowable.engine.form.TaskFormData;
 import org.flowable.engine.history.HistoricActivityInstance;
 import org.flowable.engine.history.HistoricProcessInstance;
-//import org.flowable.engine.history.HistoricTaskInstance;
-//import org.flowable.engine.history.HistoricVariableInstance;
 import org.flowable.engine.impl.RepositoryServiceImpl;
-import org.flowable.engine.impl.bpmn.behavior.UserTaskActivityBehavior;
-import org.flowable.engine.impl.form.DefaultStartFormHandler;
-//import org.flowable.engine.impl.javax.el.ExpressionFactory;
-//import org.flowable.engine.impl.javax.el.ValueExpression;
-//import org.flowable.engine.impl.juel.ExpressionFactoryImpl;
-//import org.flowable.engine.impl.juel.SimpleContext;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
 import org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntity;
-//import org.flowable.engine.impl.pvm.PvmActivity;
-//import org.flowable.engine.impl.pvm.PvmTransition;
-//import org.flowable.engine.impl.pvm.process.ActivityImpl;
-//import org.flowable.engine.impl.pvm.process.TransitionImpl;
-//import org.flowable.engine.impl.task.TaskDefinition;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
-import org.flowable.engine.task.*;
+import org.flowable.engine.task.Comment;
 import org.flowable.identitylink.api.IdentityLink;
 import org.flowable.identitylink.api.IdentityLinkType;
 import org.flowable.image.ProcessDiagramGenerator;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.dubbo.config.annotation.DubboReference;
-import org.flowable.bpmn.model.*;
 import org.flowable.task.api.Task;
 import org.flowable.task.api.TaskInfo;
 import org.flowable.task.api.history.HistoricTaskInstance;
 import org.flowable.variable.api.history.HistoricVariableInstance;
-import org.flowable.bpmn.model.*;
-import org.flowable.bpmn.model.BpmnModel;
-import org.flowable.common.engine.impl.de.odysseus.el.ExpressionFactoryImpl;
-import org.flowable.common.engine.impl.javax.el.Expression;
-import org.flowable.engine.history.HistoricActivityInstance;
-import org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntity;
-import org.flowable.identitylink.api.IdentityLinkType;
-import org.flowable.task.api.Task;
-import org.flowable.task.api.TaskInfo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -217,7 +192,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         // 获得当前活动的节点
         if (isFinished(processInstanceId)) {
             // 如果流程已经结束，则得到结束节点
-             activeActivityIds = historicActivityInstances.stream().map(org.flowable.engine.history.HistoricActivityInstance::getActivityId)
+             activeActivityIds = historicActivityInstances.stream().map(HistoricActivityInstance::getActivityId)
              .collect(Collectors.toList());
 
         } else {
@@ -464,7 +439,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         String activitiId = execution.getActivityId();
 
         //获取流程所有节点信息
-        List<ActivityImpl> activitiList = getActivities(processDefinitionEntity);
+        //List<ActivityImpl> activitiList = getActivities(processDefinitionEntity);
 
         org.flowable.bpmn.model.BpmnModel bpmnModel = repositoryService.getBpmnModel(definitionId);
         FlowElement flowElement = bpmnModel.getFlowElement(activitiId);
@@ -735,9 +710,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
             throw new BusinessException("业务校验失败: " + beforeResult.getRejectReason());
         }
 
-        ActivityImpl gotoActivity = findActivity(processDefinitionEntity, toTaskKey);
-        ActivityImpl currActivity = findActivity(processDefinitionEntity, fromTaskKey);
-        gotoAssignActivity(userTasks.getFirst(), currActivity, gotoActivity, CHEHUI);
+        gotoAssignActivity(userTasks.getFirst(), fromTaskKey, toTaskKey);
         //删除历史记录
         historyService.deleteHistoricTaskInstance(historicTaskInstanceDesc.getFirst().getId());
         historyService.deleteHistoricTaskInstance(userTasks.getFirst().getId());
@@ -910,7 +883,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         runtimeService.setVariables(input.getProcessInstanceId(), variables);
 
         // 3. 获取 BPMN 模型解析代理人表达式
-        org.flowable.bpmn.model.BpmnModel bpmnModel = repositoryService.getBpmnModel(processInstance.getProcessDefinitionId());
+        BpmnModel bpmnModel = repositoryService.getBpmnModel(processInstance.getProcessDefinitionId());
         List<Task> tasks = taskService.createTaskQuery().processInstanceId(input.getProcessInstanceId()).list();
         List<Task> updatedTasks = new ArrayList<>();
         Map<String, Object> currVariables = runtimeService.getVariables(input.getProcessInstanceId());
@@ -1212,13 +1185,9 @@ public class WorkflowServiceImpl implements IWorkflowService {
 
         String processDefinitionKey = processInstance.getProcessDefinitionKey();
 
-        ProcessDefinitionEntity processDefinitionEntity =
-                (ProcessDefinitionEntity) ((RepositoryServiceImpl) repositoryService)
-                        .getDeployedProcessDefinition(processInstance.getProcessDefinitionId());
-
-        ActivityImpl targetActivity = findActivity(processDefinitionEntity, input.getTargetTaskDefinitionKey());
-        if (targetActivity == null) {
-            throw new BusinessException("目标节点不存在: " + input.getTargetTaskDefinitionKey());
+        String targetTaskDefinitionKey = input.getTargetTaskDefinitionKey();
+        if (targetTaskDefinitionKey == null) {
+            throw new BusinessException("目标节点不存在");
         }
 
         List<Task> currentTasks = taskService.createTaskQuery().processInstanceId(input.getProcessInstanceId()).list();
@@ -1259,12 +1228,8 @@ public class WorkflowServiceImpl implements IWorkflowService {
 
         // 对每个当前任务执行跳转
         for (Task currentTask : currentTasks) {
-            ActivityImpl currActivity = findActivity(processDefinitionEntity, currentTask.getTaskDefinitionKey());
-            if (currActivity == null) {
-                continue;
-            }
             String comment = StrUtil.blankToDefault(input.getComment(), "节点跳转");
-            gotoAssignActivity(currentTask, currActivity, targetActivity, comment);
+            gotoAssignActivity(currentTask, targetTaskDefinitionKey, comment);
         }
 
         // 同步待办
@@ -1288,7 +1253,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
         // 发布跳转事件
         eventPublisher.publish(WorkflowEventType.TASK_JUMPED, input.getProcessInstanceId(),
                 processInstance.getProcessDefinitionKey(), processInstance.getBusinessKey(),
-                null, null, input.getTargetTaskDefinitionKey(), null,
+                null, null, targetTaskDefinitionKey, null,
                 input.getComment(), input.getVariables(), input.getBusinessData());
     }
 
@@ -1884,37 +1849,6 @@ public class WorkflowServiceImpl implements IWorkflowService {
         return false;
     }
 
-    private List<ActivityImpl> getActivities(org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntity processDefinitionEntity) {
-        org.flowable.bpmn.model.BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionEntity.getId());
-        if (bpmnModel == null || bpmnModel.getMainProcess() == null) {
-            return Collections.emptyList();
-        }
-        return bpmnModel.getMainProcess().findFlowElementsOfType(FlowNode.class, true).stream()
-                .map(ActivityImpl::new)
-                .toList();
-    }
-
-    private ActivityImpl findActivity(org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntity processDefinitionEntity, String activityId) {
-        org.flowable.bpmn.model.BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionEntity.getId());
-        if (bpmnModel == null || bpmnModel.getMainProcess() == null) {
-            return null;
-        }
-        FlowElement flowElement = bpmnModel.getMainProcess().getFlowElement(activityId, true);
-        if (!(flowElement instanceof FlowNode flowNode)) {
-            return null;
-        }
-        return new ActivityImpl(flowNode);
-    }
-
-    private Map<String, TaskDefinition> getTaskDefinitions(org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntity processDefinitionEntity) {
-        org.flowable.bpmn.model.BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionEntity.getId());
-        if (bpmnModel == null || bpmnModel.getMainProcess() == null) {
-            return Collections.emptyMap();
-        }
-        return bpmnModel.getMainProcess().findFlowElementsOfType(UserTask.class, true).stream()
-                .collect(Collectors.toMap(UserTask::getId, TaskDefinition::new, (a, b) -> a));
-    }
-
     private List<HistoricTaskInstance> getHistoricTaskInstanceDesc(String processInstanceId) {
         return historyService.createHistoricTaskInstanceQuery().processUnfinished().processInstanceId(processInstanceId).finished().orderByTaskCreateTime().desc().list();
     }
@@ -1922,156 +1856,5 @@ public class WorkflowServiceImpl implements IWorkflowService {
     private ProcessDefinitionEntity getProcessDefinitionEntity(String processInstanceId) {
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
         return (ProcessDefinitionEntity) repositoryService.getProcessDefinition(processInstance.getProcessDefinitionId());
-    }
-
-    private static class TaskDefinition {
-        private final UserTask userTask;
-
-        private TaskDefinition(UserTask userTask) {
-            this.userTask = userTask;
-        }
-
-        public String getKey() {
-            return userTask.getId();
-        }
-
-        public org.flowable.common.engine.impl.javax.el.Expression getNameExpression() {
-            return buildExpression(userTask.getName());
-        }
-
-        public org.flowable.common.engine.impl.javax.el.Expression getDescriptionExpression() {
-            return buildExpression(userTask.getDocumentation());
-        }
-
-        public org.flowable.common.engine.impl.javax.el.Expression getAssigneeExpression() {
-            return buildExpression(userTask.getAssignee());
-        }
-
-        public org.flowable.common.engine.impl.javax.el.Expression getOwnerExpression() {
-            return buildExpression(userTask.getOwner());
-        }
-
-        public org.flowable.common.engine.impl.javax.el.Expression getFormKeyExpression() {
-            return buildExpression(userTask.getFormKey());
-        }
-
-        public Set<org.flowable.common.engine.impl.javax.el.Expression> getCandidateUserIdExpressions() {
-            return buildExpressions(userTask.getCandidateUsers());
-        }
-
-        public Set<org.flowable.common.engine.impl.javax.el.Expression> getCandidateGroupIdExpressions() {
-            return buildExpressions(userTask.getCandidateGroups());
-        }
-
-        private org.flowable.common.engine.impl.javax.el.Expression buildExpression(String value) {
-            if (StrUtil.isBlank(value)) {
-                return null;
-            }
-            return new org.flowable.common.engine.impl.de.odysseus.el.ExpressionFactoryImpl().createValueExpression(value, String.class);
-        }
-
-        private Set<org.flowable.common.engine.impl.javax.el.Expression> buildExpressions(List<String> values) {
-            if (values == null || values.isEmpty()) {
-                return null;
-            }
-            Set<org.flowable.common.engine.impl.javax.el.Expression> set = new LinkedHashSet<>();
-            org.flowable.common.engine.impl.de.odysseus.el.ExpressionFactoryImpl expressionFactory = new org.flowable.common.engine.impl.de.odysseus.el.ExpressionFactoryImpl();
-            for (String value : values) {
-                if (StrUtil.isBlank(value)) {
-                    continue;
-                }
-                set.add(expressionFactory.createValueExpression(value, String.class));
-            }
-            return set.isEmpty() ? null : set;
-        }
-    }
-
-    private interface PvmActivity {
-        Object getProperty(String name);
-
-        List<PvmTransition> getOutgoingTransitions();
-    }
-
-    private static class ActivityImpl implements PvmActivity {
-        private final FlowNode flowNode;
-
-        private ActivityImpl(FlowNode flowNode) {
-            this.flowNode = flowNode;
-        }
-
-        public String getId() {
-            return flowNode.getId();
-        }
-
-        @Override
-        public Object getProperty(String name) {
-            return switch (name) {
-                case "type" -> resolveType();
-                case "taskDefinition" -> flowNode instanceof UserTask userTask ? new TaskDefinition(userTask) : null;
-                case "default" -> flowNode instanceof ExclusiveGateway gateway ? gateway.getDefaultFlow() : null;
-                case "multiInstance" -> flowNode instanceof UserTask userTask && userTask.getLoopCharacteristics() != null
-                        ? userTask.getLoopCharacteristics() : null;
-                default -> null;
-            };
-        }
-
-        public Object getActivityBehavior() {
-            return flowNode;
-        }
-
-        @Override
-        public List<PvmTransition> getOutgoingTransitions() {
-            List<SequenceFlow> sequenceFlows = flowNode.getOutgoingFlows();
-            if (sequenceFlows == null || sequenceFlows.isEmpty()) {
-                return Collections.emptyList();
-            }
-            return sequenceFlows.stream().map(PvmTransition::new).collect(Collectors.toList());
-        }
-
-        private String resolveType() {
-            if (flowNode instanceof UserTask) {
-                return "userTask";
-            }
-            if (flowNode instanceof ExclusiveGateway) {
-                return "exclusiveGateway";
-            }
-            if (flowNode instanceof ParallelGateway) {
-                return "parallelGateway";
-            }
-            if (flowNode instanceof EndEvent) {
-                return "endEvent";
-            }
-            if (flowNode instanceof StartEvent) {
-                return "startEvent";
-            }
-            return flowNode.getClass().getSimpleName();
-        }
-    }
-
-    private static class PvmTransition {
-        private final SequenceFlow sequenceFlow;
-
-        private PvmTransition(SequenceFlow sequenceFlow) {
-            this.sequenceFlow = sequenceFlow;
-        }
-
-        public String getId() {
-            return sequenceFlow.getId();
-        }
-
-        public PvmActivity getDestination() {
-            if (!(sequenceFlow.getTargetFlowElement() instanceof FlowNode flowNode)) {
-                return null;
-            }
-            return new ActivityImpl(flowNode);
-        }
-
-        public Object getProperty(String name) {
-            return switch (name) {
-                case "conditionText" -> sequenceFlow.getConditionExpression();
-                case "name" -> sequenceFlow.getName();
-                default -> null;
-            };
-        }
     }
 }
