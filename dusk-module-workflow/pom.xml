@@ -12,9 +12,6 @@
 
     <properties>
         <flyway.table>flyway_schema_history_workflow</flyway.table>
-        <flyway.url>jdbc:postgresql://dusk.com:5432/crux</flyway.url>
-        <flyway.user>postgres</flyway.user>
-        <flyway.password>Unitech2020</flyway.password>
     </properties>
     <dependencies>
         <dependency>
