@@ -34,7 +34,7 @@ public class TaskController extends CruxBaseController {
 
     @SneakyThrows
     @GetMapping("/view/{id}")
-    public void viewCurrentImage(@PathVariable String id, HttpServletResponse response) {
+    public void viewCurrentImage(@PathVariable("id") String id, HttpServletResponse response) {
         byte[] bytes = actTaskService.viewByTaskId(id);
         response.setContentType(MediaType.IMAGE_PNG_VALUE);
         response.setCharacterEncoding("UTF-8");

@@ -72,7 +72,7 @@ public class ModelController extends CruxBaseController {
     @GetMapping(value = "/getModelSvg/{modelId}")
     @Schema(description = "获取指定模型svg")
     @SneakyThrows
-    public void getModelSvg(@PathVariable(value = "modelId") String modelId, HttpServletResponse response) {
+    public void getModelSvg(@PathVariable("modelId") String modelId, HttpServletResponse response) {
         response.setContentType(MediaType.APPLICATION_XML_VALUE);
         ServletOutputStream os = response.getOutputStream();
         byte[] data = modelService.getSvgXmlByModelId(modelId);
@@ -85,7 +85,7 @@ public class ModelController extends CruxBaseController {
     @GetMapping(value = "/getModelSvgByKey/{key}")
     @Schema(description = "根据key获取指定模型svg")
     @SneakyThrows
-    public void getModelSvgByKey(@PathVariable(value = "key") String key, HttpServletResponse response) {
+    public void getModelSvgByKey(@PathVariable("key") String key, HttpServletResponse response) {
         response.setContentType(MediaType.APPLICATION_XML_VALUE);
         ServletOutputStream os = response.getOutputStream();
         byte[] data = modelService.getSvgXmlByKey(key);

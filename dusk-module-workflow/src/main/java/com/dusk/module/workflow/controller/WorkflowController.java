@@ -49,7 +49,7 @@ public class WorkflowController extends CruxBaseController {
     @SneakyThrows
     @Schema(description = "根据流程id获取流程图")
     @GetMapping(value = "/resource/{processId}")
-    public void resourceRead(@PathVariable String processId, HttpServletResponse response) {
+    public void resourceRead(@PathVariable("processId") String processId, HttpServletResponse response) {
         byte[] data = workflowService.readResource(processId);
         response.setContentType("image/png");
         ServletOutputStream os = response.getOutputStream();
@@ -60,7 +60,7 @@ public class WorkflowController extends CruxBaseController {
 
     @Schema(description = "获取流程历史记录")
     @GetMapping(value = "/getTaskHistory/{processId}")
-    public List<WorkflowTaskHistoryDto> getTaskHistory(@PathVariable String processId) {
+    public List<WorkflowTaskHistoryDto> getTaskHistory(@PathVariable("processId") String processId) {
         return workflowService.getTaskHistory(processId);
     }
 
@@ -86,7 +86,7 @@ public class WorkflowController extends CruxBaseController {
 
     @Schema(description = "根据流程得key获取流程图")
     @GetMapping(value = "/getWorkFlowImgByProcessKey/{processKey}")
-    public void getWorkFlowImgByProcessKey(HttpServletResponse response, @PathVariable String processKey) {
+    public void getWorkFlowImgByProcessKey(HttpServletResponse response, @PathVariable("processKey") String processKey) {
         ProcessDefinition pd = repositoryService.createProcessDefinitionQuery().processDefinitionTenantId(TenantContextHolder.getTenantId().toString()).processDefinitionKey(processKey).latestVersion().singleResult();
         if (pd == null) {
             throw new BusinessException("不存在名为" + processKey + "的流程或者尚未发布");
@@ -145,7 +145,7 @@ public class WorkflowController extends CruxBaseController {
 
     @Schema(description = "根据运行实例,获取当前任务包含待处理人的信息(不过滤权限，任何人都可以看到)")
     @GetMapping(value = "/getCurrTasksWithAssigneeInfos/{processId}")
-    public List<WorkflowTaskDetailDto> getCurrTasksWithAssigneeInfos(@PathVariable String processId) {
+    public List<WorkflowTaskDetailDto> getCurrTasksWithAssigneeInfos(@PathVariable("processId") String processId) {
         return workflowService.getCurrTasksWithAssigneeInfos(processId);
     }
 }
