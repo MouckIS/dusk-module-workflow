@@ -9,8 +9,7 @@ import com.dusk.module.workflow.dto.GetModelsInput;
 import com.dusk.module.workflow.dto.ModelDto;
 import com.dusk.module.workflow.mapper.WorkflowMapper;
 import com.dusk.module.workflow.service.IModelService;
-import com.dusk.module.workflow.utils.old.BpmnJsonConverter2;
-import com.dusk.module.workflow.utils.old.ModelDataJsonConstants;
+import com.dusk.module.workflow.constant.ModelDataJsonConstants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.SneakyThrows;
@@ -18,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.converter.BpmnXMLConverter;
 import org.flowable.bpmn.model.BpmnModel;
+import org.flowable.common.engine.impl.util.io.StringStreamSource;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.Model;
@@ -135,8 +135,13 @@ public class ModelServiceImpl implements IModelService {
     public boolean deploy(String id) {
         // 获取模型
         Model model = repositoryService.getModel(id);
-        ObjectNode objectNode = (ObjectNode) new ObjectMapper().readTree(repositoryService.getModelEditorSource(model.getId()));
-        BpmnModel bpmnModel = new BpmnJsonConverter2().convertToBpmnModel(objectNode);
+        if (model == null) {
+            throw new BusinessException("流程模型不存在！id=" + id);
+        }
+
+        byte[] editorSource = repositoryService.getModelEditorSource(model.getId());
+        String bpmnXMLStr = new String(editorSource, StandardCharsets.UTF_8);
+        BpmnModel bpmnModel = new BpmnXMLConverter().convertToBpmnModel(new StringStreamSource(bpmnXMLStr), false, false);
 
         String processName = model.getName();
         if (!StrUtil.endWithIgnoreCase(processName, ".bpmn20.xml")) {
@@ -165,11 +170,9 @@ public class ModelServiceImpl implements IModelService {
     public byte[] getSvgXmlByModelId(String modelId) {
         Model model = repositoryService.getModel(modelId);
         if (model == null) {
-            throw new BusinessException("流程信息不存在!");
+            throw new BusinessException("流程信息不存在1!");
         }
-        ObjectNode objectNode = (ObjectNode) new ObjectMapper().readTree(repositoryService.getModelEditorSource(model.getId()));
-        BpmnModel bpmnModel = new BpmnJsonConverter2().convertToBpmnModel(objectNode);
-        return new BpmnXMLConverter().convertToXML(bpmnModel);
+        return repositoryService.getModelEditorSource(model.getId());
     }
 
     @Override
@@ -179,9 +182,7 @@ public class ModelServiceImpl implements IModelService {
         if (model == null) {
             throw new BusinessException("流程信息不存在!");
         }
-        ObjectNode objectNode = (ObjectNode) new ObjectMapper().readTree(repositoryService.getModelEditorSource(model.getId()));
-        BpmnModel bpmnModel = new BpmnJsonConverter2().convertToBpmnModel(objectNode);
-        return new BpmnXMLConverter().convertToXML(bpmnModel);
+        return repositoryService.getModelEditorSource(model.getId());
     }
 
     @Override
@@ -199,7 +200,7 @@ public class ModelServiceImpl implements IModelService {
             throw new Exception("模板文件可能存在问题，请检查后重试！");
         }
 
-        ObjectNode modelNode = new BpmnJsonConverter2().convertToJson(bpmnModel);
+        byte[] bpmnXMLBytes = new BpmnXMLConverter().convertToXML(bpmnModel);
         Model modelData = repositoryService.newModel();
         modelData.setKey(bpmnModel.getMainProcess().getId());
         modelData.setName(bpmnModel.getMainProcess().getName());
@@ -214,7 +215,7 @@ public class ModelServiceImpl implements IModelService {
         modelData.setTenantId(String.valueOf(TenantContextHolder.getTenantId()));
 
         repositoryService.saveModel(modelData);
-        repositoryService.addModelEditorSource(modelData.getId(), modelNode.toString().getBytes(StandardCharsets.UTF_8));
+        repositoryService.addModelEditorSource(modelData.getId(), bpmnXMLBytes);
 
         xtr.close();
         isr.close();
