@@ -36,7 +36,7 @@ public class ProcessController extends CruxBaseController {
     @Schema(description = "获取流程图片或者xml定义")
     @SneakyThrows
     @GetMapping(value = "/resource/{proInsId}/{resType}")
-    public void resourceRead(@PathVariable String proInsId, @PathVariable String resType, HttpServletResponse response) {
+    public void resourceRead(@PathVariable("proInsId") String proInsId, @PathVariable("resType") String resType, HttpServletResponse response) {
         String contentType = "";
         if ("image".equals(resType)) {
             contentType = MediaType.APPLICATION_XML_VALUE;
@@ -55,7 +55,7 @@ public class ProcessController extends CruxBaseController {
     @Schema(description = "删除流程实例")
     @DeleteMapping("/{deploymentId}")
     @Authorize(ActivitiAuthProvider.PAGES_ACTIVITI_PROCESS_DELETE)
-    public void deleteProcIns(@PathVariable String deploymentId) {
+    public void deleteProcIns(@PathVariable("deploymentId") String deploymentId) {
         processService.removeProcIns(deploymentId);
     }
 }
