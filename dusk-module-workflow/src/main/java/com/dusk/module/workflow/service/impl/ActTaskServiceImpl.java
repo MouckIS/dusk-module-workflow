@@ -7,22 +7,34 @@ import com.dusk.common.core.tenant.TenantContextHolder;
 import com.dusk.module.workflow.service.IActTaskService;
 import com.dusk.workflow.dto.WorkflowTaskDto;
 import lombok.extern.slf4j.Slf4j;
-import org.activiti.bpmn.model.BpmnModel;
-import org.activiti.engine.*;
-import org.activiti.engine.history.HistoricActivityInstance;
-import org.activiti.engine.history.HistoricProcessInstance;
-import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
-import org.activiti.engine.impl.context.Context;
-import org.activiti.engine.runtime.ProcessInstance;
-import org.activiti.engine.task.Task;
-import org.activiti.engine.task.TaskQuery;
-import org.activiti.image.ProcessDiagramGenerator;
-import org.activiti.spring.ProcessEngineFactoryBean;
+//import org.activiti.bpmn.model.BpmnModel;
+//import org.activiti.engine.*;
+//import org.activiti.engine.history.HistoricActivityInstance;
+//import org.activiti.engine.history.HistoricProcessInstance;
+//import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
+//import org.activiti.engine.impl.context.Context;
+//import org.activiti.engine.runtime.ProcessInstance;
+//import org.activiti.engine.task.Task;
+//import org.activiti.engine.task.TaskQuery;
+//import org.activiti.image.ProcessDiagramGenerator;
+//import org.activiti.spring.ProcessEngineFactoryBean;
+import org.flowable.bpmn.model.BpmnModel;
+import org.flowable.common.engine.impl.context.Context;
+import org.flowable.engine.*;
+import org.flowable.engine.history.HistoricActivityInstance;
+import org.flowable.engine.history.HistoricProcessInstance;
+import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
+import org.flowable.engine.runtime.ProcessInstance;
+import org.flowable.image.ProcessDiagramGenerator;
+import org.flowable.spring.ProcessEngineFactoryBean;
+import org.flowable.task.api.Task;
+import org.flowable.task.api.TaskQuery;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.imageio.ImageTypeSpecifier;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,27 +50,27 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ActTaskServiceImpl implements IActTaskService {
 
-    @Autowired
+    @Autowired(required = false)
     TaskService taskService;
-    @Autowired
+    @Autowired(required = false)
     RuntimeService runtimeService;
-    @Autowired
+    @Autowired(required = false)
     RepositoryService repositoryService;
-    @Autowired
+    @Autowired(required = false)
     HistoryService historyService;
-    @Autowired
+    @Autowired(required = false)
     ProcessEngineFactoryBean processEngine;
 
     @Override
     public PagedResultDto<WorkflowTaskDto> getTasks(PagedAndSortedInputDto input) {
         TaskQuery taskQuery = taskService.createTaskQuery().taskTenantId(String.valueOf(TenantContextHolder.getTenantId()));
-        long total=taskQuery.count();
+        long total = taskQuery.count();
         List<WorkflowTaskDto> result = taskQuery.listPage((input.getPageNumber() - 1) * input.getPageSize(), input.getPageSize()).stream().map(task -> {
             WorkflowTaskDto workflowTaskDto = new WorkflowTaskDto();
             BeanUtils.copyProperties(task, workflowTaskDto, "identityLinks");
             return workflowTaskDto;
         }).collect(Collectors.toList());
-        return new PagedResultDto<>(total,result);
+        return new PagedResultDto<>(total, result);
     }
 
     @Override
@@ -89,16 +101,16 @@ public class ActTaskServiceImpl implements IActTaskService {
 
         BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
         ProcessEngineConfiguration processEngineConfiguration = processEngine.getProcessEngineConfiguration();
-        Context.setProcessEngineConfiguration((ProcessEngineConfigurationImpl) processEngineConfiguration);
+        //todo: Context.setProcessEngineConfiguration((ProcessEngineConfigurationImpl) processEngineConfiguration);
         ProcessDiagramGenerator diagramGenerator = processEngineConfiguration.getProcessDiagramGenerator();
 
         InputStream inputStream = diagramGenerator.generateDiagram(
                 bpmnModel, "png",
-                executedActivityIdList, Collections.emptyList(),
+                executedActivityIdList, null,
                 processEngine.getProcessEngineConfiguration().getActivityFontName(),
                 processEngine.getProcessEngineConfiguration().getLabelFontName(),
                 "宋体",
-                null, 1.0);
+                null, 1.0, true);
         return IoUtil.readBytes(inputStream);
     }
 }

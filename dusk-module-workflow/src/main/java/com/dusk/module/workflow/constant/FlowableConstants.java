@@ -4,7 +4,7 @@ package com.dusk.module.workflow.constant;
  * @author kefuming
  * @date 2020-12-10 10:37
  */
-public class ActivitiConstants {
+public class FlowableConstants {
     /**
      * 待办的类型 用于前端跳转判断用
      */
