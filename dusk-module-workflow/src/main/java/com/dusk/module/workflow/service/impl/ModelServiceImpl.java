@@ -4,25 +4,25 @@ import cn.hutool.core.util.StrUtil;
 import com.dusk.common.core.dto.PagedResultDto;
 import com.dusk.common.core.exception.BusinessException;
 import com.dusk.common.core.tenant.TenantContextHolder;
-import com.dusk.common.core.utils.DozerUtils;
+import com.dusk.common.core.utils.MapperUtil;
 import com.dusk.module.workflow.dto.GetModelsInput;
 import com.dusk.module.workflow.dto.ModelDto;
+import com.dusk.module.workflow.mapper.WorkflowMapper;
 import com.dusk.module.workflow.service.IModelService;
+import com.dusk.module.workflow.constant.ModelDataJsonConstants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.github.dozermapper.core.Mapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.activiti.bpmn.converter.BpmnXMLConverter;
-import org.activiti.bpmn.model.BpmnModel;
-import org.activiti.editor.constants.ModelDataJsonConstants;
-import org.activiti.editor.language.json.converter.BpmnJsonConverter;
-import org.activiti.engine.RepositoryService;
-import org.activiti.engine.repository.Deployment;
-import org.activiti.engine.repository.Model;
-import org.activiti.engine.repository.ModelQuery;
-import org.activiti.engine.repository.ProcessDefinition;
 import org.apache.commons.lang3.StringUtils;
+import org.flowable.bpmn.converter.BpmnXMLConverter;
+import org.flowable.bpmn.model.BpmnModel;
+import org.flowable.common.engine.impl.util.io.StringStreamSource;
+import org.flowable.engine.RepositoryService;
+import org.flowable.engine.repository.Deployment;
+import org.flowable.engine.repository.Model;
+import org.flowable.engine.repository.ModelQuery;
+import org.flowable.engine.repository.ProcessDefinition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +31,7 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -42,12 +43,11 @@ import java.util.List;
 @Transactional
 public class ModelServiceImpl implements IModelService {
 
+    private final WorkflowMapper mapper = WorkflowMapper.INSTANCE;
+    @Autowired(required = false)
+    private RepositoryService repositoryService;
     @Autowired
-    RepositoryService repositoryService;
-    @Autowired
-    ObjectMapper objectMapper;
-    @Autowired
-    private Mapper dozerMapper;
+    private ObjectMapper objectMapper;
 
     @SneakyThrows
     @Override
@@ -64,7 +64,7 @@ public class ModelServiceImpl implements IModelService {
         editorNode.set("properties", properties);
 
         ObjectNode stencilset = objectMapper.createObjectNode();
-        stencilset.put("namespace", "http://b3mn.org/stencilset/bpmn2.0#");
+        stencilset.put("namespace", "https://b3mn.org/stencilset/bpmn2.0#");
         editorNode.set("stencilset", stencilset);
 
         Model model = repositoryService.newModel();
@@ -83,7 +83,7 @@ public class ModelServiceImpl implements IModelService {
         model.setTenantId(TenantContextHolder.getTenantId().toString());
 
         repositoryService.saveModel(model);
-        repositoryService.addModelEditorSource(model.getId(), editorNode.toString().getBytes("utf-8"));
+        repositoryService.addModelEditorSource(model.getId(), editorNode.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
@@ -97,7 +97,7 @@ public class ModelServiceImpl implements IModelService {
         }
         long total = modelQuery.count();
         List<Model> models = modelQuery.listPage((input.getPageNumber() - 1) * input.getPageSize(), input.getPageSize());
-        return new PagedResultDto<>(total, DozerUtils.mapList(dozerMapper, models, ModelDto.class));
+        return new PagedResultDto<>(total, MapperUtil.mapList(models, mapper::toDto));
     }
 
     @Override
@@ -113,11 +113,10 @@ public class ModelServiceImpl implements IModelService {
                 .modelTenantId(String.valueOf(TenantContextHolder.getTenantId()))
                 .modelVersion(version)
                 .latestVersion().list();
-        if(list.size()==0){
+        if (list.isEmpty()) {
             throw new BusinessException("数据已被他人修改，请刷新后重试！");
-        }
-        else {
-            repositoryService.deleteModel(list.get(0).getId());
+        } else {
+            repositoryService.deleteModel(list.getFirst().getId());
         }
         return true;
     }
@@ -136,8 +135,13 @@ public class ModelServiceImpl implements IModelService {
     public boolean deploy(String id) {
         // 获取模型
         Model model = repositoryService.getModel(id);
-        ObjectNode objectNode = (ObjectNode) new ObjectMapper().readTree(repositoryService.getModelEditorSource(model.getId()));
-        BpmnModel bpmnModel = new BpmnJsonConverter().convertToBpmnModel(objectNode);
+        if (model == null) {
+            throw new BusinessException("流程模型不存在！id=" + id);
+        }
+
+        byte[] editorSource = repositoryService.getModelEditorSource(model.getId());
+        String bpmnXMLStr = new String(editorSource, StandardCharsets.UTF_8);
+        BpmnModel bpmnModel = new BpmnXMLConverter().convertToBpmnModel(new StringStreamSource(bpmnXMLStr), false, false);
 
         String processName = model.getName();
         if (!StrUtil.endWithIgnoreCase(processName, ".bpmn20.xml")) {
@@ -155,7 +159,7 @@ public class ModelServiceImpl implements IModelService {
                 .deploymentId(deployment.getId())
                 .list();
 
-        list.stream().forEach(processDefinition ->
+        list.forEach(processDefinition ->
                 repositoryService.setProcessDefinitionCategory(processDefinition.getId(), model.getCategory()));
 
         return true;
@@ -166,12 +170,9 @@ public class ModelServiceImpl implements IModelService {
     public byte[] getSvgXmlByModelId(String modelId) {
         Model model = repositoryService.getModel(modelId);
         if (model == null) {
-            throw new BusinessException("流程信息不存在!");
+            throw new BusinessException("流程信息不存在1!");
         }
-        ObjectNode objectNode = (ObjectNode) new ObjectMapper().readTree(repositoryService.getModelEditorSource(model.getId()));
-        BpmnModel bpmnModel = new BpmnJsonConverter().convertToBpmnModel(objectNode);
-        byte[] bpmnBytes = new BpmnXMLConverter().convertToXML(bpmnModel);//
-        return bpmnBytes;
+        return repositoryService.getModelEditorSource(model.getId());
     }
 
     @Override
@@ -181,10 +182,7 @@ public class ModelServiceImpl implements IModelService {
         if (model == null) {
             throw new BusinessException("流程信息不存在!");
         }
-        ObjectNode objectNode = (ObjectNode) new ObjectMapper().readTree(repositoryService.getModelEditorSource(model.getId()));
-        BpmnModel bpmnModel = new BpmnJsonConverter().convertToBpmnModel(objectNode);
-        byte[] bpmnBytes = new BpmnXMLConverter().convertToXML(bpmnModel);//
-        return bpmnBytes;
+        return repositoryService.getModelEditorSource(model.getId());
     }
 
     @Override
@@ -193,7 +191,7 @@ public class ModelServiceImpl implements IModelService {
         XMLInputFactory xif = XMLInputFactory.newInstance();
         InputStreamReader isr = null;
         XMLStreamReader xtr = null;
-        isr = new InputStreamReader(is, "utf-8");
+        isr = new InputStreamReader(is, StandardCharsets.UTF_8);
         xtr = xif.createXMLStreamReader(isr);
         BpmnModel bpmnModel = new BpmnXMLConverter().convertToBpmnModel(xtr);
         // 处理异常
@@ -202,7 +200,7 @@ public class ModelServiceImpl implements IModelService {
             throw new Exception("模板文件可能存在问题，请检查后重试！");
         }
 
-        ObjectNode modelNode = new BpmnJsonConverter().convertToJson(bpmnModel);
+        byte[] bpmnXMLBytes = new BpmnXMLConverter().convertToXML(bpmnModel);
         Model modelData = repositoryService.newModel();
         modelData.setKey(bpmnModel.getMainProcess().getId());
         modelData.setName(bpmnModel.getMainProcess().getName());
@@ -217,7 +215,7 @@ public class ModelServiceImpl implements IModelService {
         modelData.setTenantId(String.valueOf(TenantContextHolder.getTenantId()));
 
         repositoryService.saveModel(modelData);
-        repositoryService.addModelEditorSource(modelData.getId(), modelNode.toString().getBytes("utf-8"));
+        repositoryService.addModelEditorSource(modelData.getId(), bpmnXMLBytes);
 
         xtr.close();
         isr.close();

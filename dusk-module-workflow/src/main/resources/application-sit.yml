@@ -3,9 +3,30 @@ server:
 
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/crux}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/dusk}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:DuskTech@postgre}
+    druid:
+      max-active: 10
+      min-idle: 2
+      initial-size: 5
+      max-wait: 60000
+      # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+      time-between-eviction-runs-millis: 3000
+      # 配置一个连接在池中最小生存的时间，单位是毫秒
+      min-evictable-idle-time-millis: 30000
+      validation-query: SELECT 1
+      test-on-borrow: false
+      test-on-return: false
+      # 打开PSCache，并且指定每个连接上PSCache的大小
+      pool-prepared-statements: true
+      max-pool-prepared-statement-per-connection-size: 20
+      filter:
+        slf4j:
+          statement-sql-pretty-format: true
+          result-set-log-enabled: false
+          statement-executable-sql-log-enable: false
+          enabled: true
 
   cloud:
     nacos:
@@ -15,18 +36,16 @@ spring:
         password: ${spring.cloud.nacos.password:dusk}
         namespace: sit
         group: services
+      config:
+        server-addr: ${NACOS_ADDRESS:localhost:8848}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:dusk}
+        namespace: sit
   rabbitmq:
     is-enabled: ${SPRING_RABBITMQ_ISENABLED:false}
-    username: admin
-    password: DuskTech#mq
-    addresses: wsl.com
   flyway:
     enabled: false
     table: flyway_schema_history_workflow
-
-logging:
-  level:
-    org.orion: ${LOGGING_LEVEL_ORION:DEBUG}
 
 dubbo:
   protocol:
@@ -38,16 +57,11 @@ dubbo:
     base-packages: com.dusk.module.workflow.service
   consumer:
     check: false
+  provider:
+    timeout: 2000
 
+app:
+  use-redis: false
 activiti:
   async-executor-activate: false
   check-process-definitions: false
-
-#这是seata单机配置，不适合集群
-seata:
-  enabled: false
-  service:
-    vgroup-mapping:
-      dusk-module-workflow-seata-service-group: default
-    grouplist:
-      default: 192.168.105.105:8091

@@ -41,7 +41,7 @@ public class WorkflowTaskDto implements Serializable {
 
     public AssigneeTypeEnum getAssigneeType() {
         //只认第一个切割,的字符 是 长整形的 就是 基于 用户审批，不支持 用户和角色混合的模式
-        if (StrUtil.isNotEmpty(assignee) && NumberUtil.isLong(StrUtil.split(assignee, ",")[0])) {
+        if (StrUtil.isNotEmpty(assignee) && NumberUtil.isLong(StrUtil.split(assignee, ",").getFirst())) {
             return AssigneeTypeEnum.UserId;
         } else {
             return AssigneeTypeEnum.Role;
