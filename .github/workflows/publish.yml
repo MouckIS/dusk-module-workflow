@@ -16,6 +16,7 @@ permissions:
 
 env:
   GH_PAT: ${{ secrets.TOKEN }}
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   deploy-shared:
@@ -65,8 +66,8 @@ jobs:
               </server>
               <server>
                 <id>github-dusk-module-workflow</id>
-                <username>MouckIS</username>
-                <password>${env.GH_PAT}</password>
+                <username>${{ github.actor }}</username>
+                <password>${env.GH_TOKEN}</password>
               </server>
             </servers>
             <repositories>
