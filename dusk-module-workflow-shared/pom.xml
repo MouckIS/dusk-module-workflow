@@ -15,4 +15,27 @@
             <artifactId>dusk-common-mqs</artifactId>
         </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>github-dusk-module-shared-parent</id>
+            <url>https://maven.pkg.github.com/MouckIS/dusk-module-shared-parent</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>github-dusk-common</id>
+            <url>https://maven.pkg.github.com/MouckIS/dusk-common</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+    <distributionManagement>
+        <repository>
+            <id>github-dusk-module-workflow</id>
+            <url>https://maven.pkg.github.com/MouckIS/dusk-module-workflow</url>
+        </repository>
+    </distributionManagement>
 </project>
