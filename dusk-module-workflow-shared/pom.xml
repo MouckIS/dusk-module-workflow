@@ -34,8 +34,8 @@
     </repositories>
     <distributionManagement>
         <repository>
-            <id>github-dusk-module-workflow-shared</id>
-            <url>https://maven.pkg.github.com/MouckIS/dusk-module-workflow-shared</url>
+            <id>github-dusk-module-workflow</id>
+            <url>https://maven.pkg.github.com/MouckIS/dusk-module-workflow</url>
         </repository>
     </distributionManagement>
 </project>
