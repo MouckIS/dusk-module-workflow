@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  项目内 Maven 配置：内部 dusk-* 依赖（dusk-module-parent、dusk-module-shared-parent、
+  dusk-common、dusk-dependencies）托管在 GitHub Packages，需要通过本文件配置认证与仓库。
+
+  使用前设置环境变量 GH_PAT（GitHub PAT，需要 read:packages 权限）：
+      export GH_PAT=<你的 PAT>
+  发布（mvn deploy）时 PAT 需要 write:packages 权限。
+
+  本文件已通过 .mvn/maven.config 自动启用；也可手动指定：mvn -s settings.xml ...
+-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+    <servers>
+        <server>
+            <id>github-dusk-dependencies</id>
+            <username>MouckIS</username>
+            <password>${env.GH_PAT}</password>
+        </server>
+        <server>
+            <id>github-dusk-module-parent</id>
+            <username>MouckIS</username>
+            <password>${env.GH_PAT}</password>
+        </server>
+        <server>
+            <id>github-dusk-module-shared-parent</id>
+            <username>MouckIS</username>
+            <password>${env.GH_PAT}</password>
+        </server>
+        <server>
+            <id>github-dusk-common</id>
+            <username>MouckIS</username>
+            <password>${env.GH_PAT}</password>
+        </server>
+        <server>
+            <id>github-dusk-module-workflow</id>
+            <username>MouckIS</username>
+            <password>${env.GH_PAT}</password>
+        </server>
+    </servers>
+</settings>
