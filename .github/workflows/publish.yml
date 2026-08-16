@@ -108,7 +108,9 @@ jobs:
 
       - name: Set Lowercase Image Name
         run: |
-          echo "LOW_IMAGE_NAME=ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
+          # 仅对镜像路径部分进行小写转换，保持变量名 LOW_IMAGE_NAME 仍为大写
+          IMAGE_LOWER=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "LOW_IMAGE_NAME=${IMAGE_LOWER}" >> $GITHUB_ENV
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
