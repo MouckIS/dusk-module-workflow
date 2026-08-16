@@ -1,5 +1,4 @@
 .git
 .idea
 *.iml
-target/
 .github/
