@@ -151,7 +151,7 @@ jobs:
           # 执行分层提取
           java -Djarmode=layertools -jar "$BOOT_JAR" extract
 
-      - name: Build and Push Docker Image (Snapshot/Latest)
+      - name: Build and Push Docker Image (Latest)
         if: ${{ github.ref_type == 'branch' }}
         uses: docker/build-push-action@v5
         with:
@@ -162,7 +162,6 @@ jobs:
           cache-to: type=gha,mode=max
           tags: |
             ${{ env.LOW_IMAGE_NAME }}:latest
-            ${{ env.LOW_IMAGE_NAME }}:${{ github.ref_name }}
       - name: Build and Push Docker Image (Release Tag)
         if: ${{ github.ref_type == 'tag' }}
         uses: docker/build-push-action@v5
