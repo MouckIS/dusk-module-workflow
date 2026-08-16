@@ -137,7 +137,14 @@ jobs:
         run: |
           mkdir -p target/extracted
           cd target/extracted
-          java -Djarmode=layertools -jar ../*.jar extract
+          # 精准查找含有引导类/主清单的 Spring Boot 可执行 Jar 包
+          # 这样可以自动过滤失误生成的普通的非可执行 jar 以及 .jar.original 文件
+          BOOT_JAR=$(find ../ -maxdepth 1 -name "*.jar" ! -name "*.original" -exec grep -q "JarLauncher" {} \; -print -quit || find ../ -maxdepth 1 -name "*.jar" ! -name "*.original" | head -n 1)
+          
+          echo "Found Boot executable JAR: $BOOT_JAR"
+          
+          # 执行分层提取
+          java -Djarmode=layertools -jar "$BOOT_JAR" extract
 
       - name: Build and Push Docker Image (Snapshot/Latest)
         if: ${{ github.ref_type == 'branch' }}
