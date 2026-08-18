@@ -54,7 +54,7 @@
     <repositories>
         <repository>
             <id>github-dusk-common</id>
-            <url>https://maven.pkg.github.com/MouckIS/dusk-common</url>
+            <url>https://maven.pkg.github.com/mouckis/dusk-common</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -63,7 +63,7 @@
     <distributionManagement>
         <repository>
             <id>github-dusk-module-workflow</id>
-            <url>https://maven.pkg.github.com/MouckIS/dusk-module-workflow</url>
+            <url>https://maven.pkg.github.com/mouckis/dusk-module-workflow</url>
         </repository>
     </distributionManagement>
 </project>

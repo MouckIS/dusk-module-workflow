@@ -16,7 +16,7 @@
     <repositories>
         <repository>
             <id>github-dusk-module-parent</id>
-            <url>https://maven.pkg.github.com/MouckIS/dusk-module-parent</url>
+            <url>https://maven.pkg.github.com/mouckis/dusk-module-parent</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -25,7 +25,7 @@
     <distributionManagement>
         <repository>
             <id>github-dusk-module-workflow</id>
-            <url>https://maven.pkg.github.com/MouckIS/dusk-module-workflow</url>
+            <url>https://maven.pkg.github.com/mouckis/dusk-module-workflow</url>
         </repository>
     </distributionManagement>
 </project>
