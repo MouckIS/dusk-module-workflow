@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 生产日志配置：控制台 classic + 文件 JSON 异步写入（供日志平台采集） -->
 <configuration>
-    <!-- 日志等级：默认 INFO，可在 application-*.yml 中通过 logging.level.root 覆盖 -->
+    <!-- 日志等级：默认 INFO（本地调试可改为 DEBUG），可在 application-*.yml 中覆盖 -->
     <springProperty scope="context" name="logLevel" source="logging.level.root" defaultValue="INFO"/>
     <springProperty scope="context" name="logModule" source="logging.module" defaultValue="dusk-module-workflow"/>
     <include resource="conf/logback-base.xml"/>
+
     <!-- ======================= root ======================= -->
     <root level="${logLevel}">
+        <appender-ref ref="STDOUT"/>
         <appender-ref ref="ASYNC_LOG"/>
     </root>
 </configuration>
