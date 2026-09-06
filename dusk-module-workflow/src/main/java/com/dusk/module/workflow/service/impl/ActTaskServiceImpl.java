@@ -19,11 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 //import org.activiti.image.ProcessDiagramGenerator;
 //import org.activiti.spring.ProcessEngineFactoryBean;
 import org.flowable.bpmn.model.BpmnModel;
-import org.flowable.common.engine.impl.context.Context;
 import org.flowable.engine.*;
 import org.flowable.engine.history.HistoricActivityInstance;
 import org.flowable.engine.history.HistoricProcessInstance;
-import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.image.ProcessDiagramGenerator;
 import org.flowable.spring.ProcessEngineFactoryBean;
@@ -34,10 +32,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.imageio.ImageTypeSpecifier;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 

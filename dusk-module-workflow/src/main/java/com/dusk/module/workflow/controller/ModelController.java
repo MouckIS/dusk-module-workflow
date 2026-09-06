@@ -10,10 +10,10 @@ import com.dusk.module.workflow.dto.ModelDto;
 import com.dusk.module.workflow.service.IModelService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Resource;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.SneakyThrows;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,7 +28,7 @@ import java.io.ByteArrayInputStream;
 @RequestMapping("/model")
 @Tag(description = "模型管理", name = "Model")
 public class ModelController extends CruxBaseController {
-    @Autowired
+    @Resource
     IModelService modelService;
 
 
@@ -104,7 +104,7 @@ public class ModelController extends CruxBaseController {
     @Authorize(ActivitiAuthProvider.PAGES_ACTIVITI_MODEL_SAVE)
     @PostMapping("/save")
     @Schema(description = "保存模型")
-    public String save(@RequestBody String svgXml) throws Exception {
+    public String save(@RequestBody String svgXml) {
         ByteArrayInputStream is = IoUtil.toStream(svgXml.getBytes());
         return modelService.convertInputStreamToModel(is);
     }

@@ -1303,9 +1303,9 @@ public class WorkflowServiceImpl implements IWorkflowService {
                 boolean appPush = taskFormKey.getActiviti().getNotice().isAppPush();
                 String starter = (String) variables.get(FlowableConstants.STARTER);
                 String businessId = processInstance.getId() + "|" + p.getId();
-                ToDoTargetType toDoTargetType = ToDoTargetType.Role;
+                ToDoTargetType toDoTargetType = ToDoTargetType.ROLE;
                 if (p.getAssigneeType().equals(AssigneeTypeEnum.UserId)) {
-                    toDoTargetType = ToDoTargetType.UserId;
+                    toDoTargetType = ToDoTargetType.USER_ID;
                 }
 
                 TodoExtensionsDto extensionsDto = new TodoExtensionsDto();

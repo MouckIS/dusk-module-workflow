@@ -47,19 +47,21 @@ public class TaskFormKey {
          * @return
          */
         private String toStr(Object o) {
-            if (o == null) {
-                return "";
-            } else if (o instanceof String) {
-                return (String) o;
-            } else if (o instanceof List) {
-                List<Object> list = (List<Object>) o;
-                List<String> resultList = new ArrayList<>();
-                for (Object o1 : list) {
-                    resultList.add(o1.toString());
+            switch (o) {
+                case String s -> {
+                    return s;
                 }
-                return String.join(",", resultList);
-            } else {
-                return "";
+                case List ignored -> {
+                    List<Object> list = (List<Object>) o;
+                    List<String> resultList = new ArrayList<>();
+                    for (Object o1 : list) {
+                        resultList.add(o1.toString());
+                    }
+                    return String.join(",", resultList);
+                }
+                case null, default -> {
+                    return "";
+                }
             }
         }
     }

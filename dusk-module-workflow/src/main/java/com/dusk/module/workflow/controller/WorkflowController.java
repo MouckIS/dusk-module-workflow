@@ -12,6 +12,7 @@ import com.dusk.workflow.dto.WorkflowTaskDto;
 import com.dusk.workflow.dto.WorkflowTaskHistoryDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Resource;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.SneakyThrows;
@@ -38,11 +39,11 @@ import java.util.List;
 @RequestMapping("/workflow")
 @Tag(description = "工作流管理", name = "Workflow")
 public class WorkflowController extends CruxBaseController {
-    @Autowired
+    @Resource
     private IWorkflowService workflowService;
     @Autowired(required = false)
     private RepositoryService repositoryService;
-    @Autowired
+    @Resource
     private ProcessEngineConfiguration processEngineConfiguration;
 
 
@@ -72,14 +73,14 @@ public class WorkflowController extends CruxBaseController {
 
     @Schema(description = "判断当前流程当前是否允许撤回")
     @GetMapping(value = "/checkProcessCanRecallPre")
-    public boolean checkProcessCanRecallPre(@RequestParam(value = "processInstanceId", required = true) String processInstanceId) {
+    public boolean checkProcessCanRecallPre(@RequestParam(value = "processInstanceId") String processInstanceId) {
         return workflowService.checkProcessCanRecallPre(processInstanceId);
     }
 
 
     @Schema(description = "撤回到上一节点")
     @GetMapping(value = "/recallPre")
-    public void recallPre(@RequestParam(value = "processInstanceId", required = true) String processInstanceId) {
+    public void recallPre(@RequestParam(value = "processInstanceId") String processInstanceId) {
         workflowService.recallPre(processInstanceId);
     }
 

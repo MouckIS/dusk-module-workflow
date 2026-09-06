@@ -9,10 +9,10 @@ import com.dusk.module.workflow.dto.ProcessDefDto;
 import com.dusk.module.workflow.service.IProcessService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Resource;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.SneakyThrows;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/process")
 @Tag(description = "流程管理", name = "Process")
 public class ProcessController extends CruxBaseController {
-    @Autowired
+    @Resource
     IProcessService processService;
 
     @Schema(description = "分页获取流程")
@@ -37,7 +37,7 @@ public class ProcessController extends CruxBaseController {
     @SneakyThrows
     @GetMapping(value = "/resource/{proInsId}/{resType}")
     public void resourceRead(@PathVariable("proInsId") String proInsId, @PathVariable("resType") String resType, HttpServletResponse response) {
-        String contentType = "";
+        String contentType;
         if ("image".equals(resType)) {
             contentType = MediaType.APPLICATION_XML_VALUE;
         } else {

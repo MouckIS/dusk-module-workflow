@@ -1,8 +1,8 @@
 package com.dusk.module.workflow.core.config;
 
 import com.dusk.common.core.jpa.Sequence;
+import jakarta.annotation.Resource;
 import org.flowable.common.engine.impl.cfg.IdGenerator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class SnowFlakeGenerator implements IdGenerator {
-    @Autowired
+    @Resource
     private Sequence sequence;
 
     @Override

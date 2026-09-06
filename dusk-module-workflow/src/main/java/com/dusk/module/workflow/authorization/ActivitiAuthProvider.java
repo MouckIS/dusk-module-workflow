@@ -26,16 +26,16 @@ public class ActivitiAuthProvider extends AuthorizationProvider {
 
     @Override
     public void setPermissions(IPermissionDefinitionContext context) {
-        Permission main = context.createPermission(PAGES_ACTIVITI, "工作流", MultiTenancySides.Tenant);
+        Permission main = context.createPermission(PAGES_ACTIVITI, "工作流", MultiTenancySides.TENANT);
 
-        Permission modelPermission = main.createChildPermission(PAGES_ACTIVITI_MODEL, "模型管理", MultiTenancySides.Tenant);
-        modelPermission.createChildPermission(PAGES_ACTIVITI_MODEL_SAVE, "新增或者编辑", MultiTenancySides.Tenant);
-        modelPermission.createChildPermission(PAGES_ACTIVITI_MODEL_DEPLOY, "发布流程", MultiTenancySides.Tenant);
-        modelPermission.createChildPermission(PAGES_ACTIVITI_MODEL_DELETE, "删除", MultiTenancySides.Tenant);
+        Permission modelPermission = main.createChildPermission(PAGES_ACTIVITI_MODEL, "模型管理", MultiTenancySides.TENANT);
+        modelPermission.createChildPermission(PAGES_ACTIVITI_MODEL_SAVE, "新增或者编辑", MultiTenancySides.TENANT);
+        modelPermission.createChildPermission(PAGES_ACTIVITI_MODEL_DEPLOY, "发布流程", MultiTenancySides.TENANT);
+        modelPermission.createChildPermission(PAGES_ACTIVITI_MODEL_DELETE, "删除", MultiTenancySides.TENANT);
 
-        Permission processPermission = main.createChildPermission(PAGES_ACTIVITI_PROCESS, "流程管理", MultiTenancySides.Tenant);
-        processPermission.createChildPermission(PAGES_ACTIVITI_PROCESS_DELETE, "删除", MultiTenancySides.Tenant);
+        Permission processPermission = main.createChildPermission(PAGES_ACTIVITI_PROCESS, "流程管理", MultiTenancySides.TENANT);
+        processPermission.createChildPermission(PAGES_ACTIVITI_PROCESS_DELETE, "删除", MultiTenancySides.TENANT);
 
-        main.createChildPermission(PAGES_ACTIVITI_TASK, "任务管理", MultiTenancySides.Tenant);
+        main.createChildPermission(PAGES_ACTIVITI_TASK, "任务管理", MultiTenancySides.TENANT);
     }
 }

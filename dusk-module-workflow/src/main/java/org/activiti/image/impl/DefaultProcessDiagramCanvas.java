@@ -64,34 +64,34 @@ public class DefaultProcessDiagramCanvas {
 
 
     // Colors
-    protected static Color TASK_BOX_COLOR = new Color(249, 249, 249);
-    protected static Color SUBPROCESS_BOX_COLOR = new Color(255, 255, 255);
-    protected static Color EVENT_COLOR = new Color(255, 255, 255);
-    protected static Color CONNECTION_COLOR = new Color(88, 88, 88);
-    protected static Color CONDITIONAL_INDICATOR_COLOR = new Color(255, 255, 255);
-    protected static Color HIGHLIGHT_COLOR = Color.RED;
+    protected static final Color TASK_BOX_COLOR = new Color(249, 249, 249);
+    protected static final Color SUBPROCESS_BOX_COLOR = new Color(255, 255, 255);
+    protected static final Color EVENT_COLOR = new Color(255, 255, 255);
+    protected static final Color CONNECTION_COLOR = new Color(88, 88, 88);
+    protected static final Color CONDITIONAL_INDICATOR_COLOR = new Color(255, 255, 255);
+    protected static final Color HIGHLIGHT_COLOR = Color.RED;
     protected static Color LABEL_COLOR = new Color(112, 146, 190);
-    protected static Color TASK_BORDER_COLOR = new Color(187, 187, 187);
-    protected static Color EVENT_BORDER_COLOR = new Color(88, 88, 88);
-    protected static Color SUBPROCESS_BORDER_COLOR = new Color(0, 0, 0);
+    protected static final Color TASK_BORDER_COLOR = new Color(187, 187, 187);
+    protected static final Color EVENT_BORDER_COLOR = new Color(88, 88, 88);
+    protected static final Color SUBPROCESS_BORDER_COLOR = new Color(0, 0, 0);
 
     // Fonts
     protected static Font LABEL_FONT = null;
     protected static Font ANNOTATION_FONT = null;
 
     // Strokes
-    protected static Stroke THICK_TASK_BORDER_STROKE = new BasicStroke(3.0f);
-    protected static Stroke GATEWAY_TYPE_STROKE = new BasicStroke(3.0f);
-    protected static Stroke END_EVENT_STROKE = new BasicStroke(3.0f);
-    protected static Stroke MULTI_INSTANCE_STROKE = new BasicStroke(1.3f);
-    protected static Stroke EVENT_SUBPROCESS_STROKE = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1.0f,  new float[] { 1.0f }, 0.0f);
-    protected static Stroke NON_INTERRUPTING_EVENT_STROKE = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1.0f,  new float[] { 4.0f, 3.0f }, 0.0f);
-    protected static Stroke HIGHLIGHT_FLOW_STROKE = new BasicStroke(1.3f);
+    protected static final Stroke THICK_TASK_BORDER_STROKE = new BasicStroke(3.0f);
+    protected static final Stroke GATEWAY_TYPE_STROKE = new BasicStroke(3.0f);
+    protected static final Stroke END_EVENT_STROKE = new BasicStroke(3.0f);
+    protected static final Stroke MULTI_INSTANCE_STROKE = new BasicStroke(1.3f);
+    protected static final Stroke EVENT_SUBPROCESS_STROKE = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1.0f,  new float[] { 1.0f }, 0.0f);
+    protected static final Stroke NON_INTERRUPTING_EVENT_STROKE = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1.0f,  new float[] { 4.0f, 3.0f }, 0.0f);
+    protected static final Stroke HIGHLIGHT_FLOW_STROKE = new BasicStroke(1.3f);
     protected static Stroke ANNOTATION_STROKE = new BasicStroke(2.0f);
-    protected static Stroke ASSOCIATION_STROKE = new BasicStroke(2.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1.0f,  new float[] { 2.0f, 2.0f }, 0.0f);
+    protected static final Stroke ASSOCIATION_STROKE = new BasicStroke(2.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1.0f,  new float[] { 2.0f, 2.0f }, 0.0f);
 
     // icons
-    protected static int ICON_PADDING = 5;
+    protected static final int ICON_PADDING = 5;
     protected static BufferedImage USERTASK_IMAGE;
     protected static BufferedImage SCRIPTTASK_IMAGE;
     protected static BufferedImage SERVICETASK_IMAGE;
@@ -113,10 +113,10 @@ public class DefaultProcessDiagramCanvas {
     protected static BufferedImage SIGNAL_CATCH_IMAGE;
     protected static BufferedImage SIGNAL_THROW_IMAGE;
 
-    protected int canvasWidth = -1;
-    protected int canvasHeight = -1;
-    protected int minX = -1;
-    protected int minY = -1;
+    protected final int canvasWidth;
+    protected final int canvasHeight;
+    protected int minX;
+    protected int minY;
     protected BufferedImage processDiagram;
     protected Graphics2D g;
     protected FontMetrics fontMetrics;
@@ -187,7 +187,7 @@ public class DefaultProcessDiagramCanvas {
         }
 
         this.g = processDiagram.createGraphics();
-        if ("png".equalsIgnoreCase(imageType) == false) {
+        if (!"png".equalsIgnoreCase(imageType)) {
             this.g.setBackground(new Color(255, 255, 255, 0));
             this.g.clearRect(0, 0, canvasWidth, canvasHeight);
         }
@@ -269,8 +269,8 @@ public class DefaultProcessDiagramCanvas {
         }
 
         // Try to remove white space
-        minX = (minX <= 5) ? 5 : minX;
-        minY = (minY <= 5) ? 5 : minY;
+        minX = Math.max(minX, 5);
+        minY = Math.max(minY, 5);
         BufferedImage imageToSerialize = processDiagram;
         if (minX >= 0 && minY >= 0) {
             imageToSerialize = processDiagram.getSubimage(minX - 5, minY - 5, canvasWidth - minX + 5, canvasHeight - minY + 5);
@@ -314,8 +314,8 @@ public class DefaultProcessDiagramCanvas {
         g.setPaint(originalPaint);
         if (image != null) {
             // calculate coordinates to center image
-            int imageX = (int) Math.round(graphicInfo.getX() + (graphicInfo.getWidth() / 2) - (image.getWidth() / 2 * scaleFactor));
-            int imageY = (int) Math.round(graphicInfo.getY() + (graphicInfo.getHeight() / 2) - (image.getHeight() / 2 * scaleFactor));
+            int imageX = (int) Math.round(graphicInfo.getX() + (graphicInfo.getWidth() / 2) - ((double) image.getWidth() / 2 * scaleFactor));
+            int imageY = (int) Math.round(graphicInfo.getY() + (graphicInfo.getHeight() / 2) - ((double) image.getHeight() / 2 * scaleFactor));
             g.drawImage(image, imageX, imageY,
                     (int) (image.getWidth() / scaleFactor), (int) (image.getHeight() / scaleFactor), null);
         }
@@ -385,7 +385,7 @@ public class DefaultProcessDiagramCanvas {
         g.fill(outerCircle);
 
         g.setPaint(EVENT_BORDER_COLOR);
-        if (isInterrupting == false)
+        if (!isInterrupting)
             g.setStroke(NON_INTERRUPTING_EVENT_STROKE);
         g.draw(outerCircle);
         g.setStroke(originalStroke);
@@ -394,8 +394,8 @@ public class DefaultProcessDiagramCanvas {
 
         if (image != null) {
             // calculate coordinates to center image
-            int imageX = (int) (graphicInfo.getX() + (graphicInfo.getWidth() / 2) - (image.getWidth() / 2 * scaleFactor));
-            int imageY = (int) (graphicInfo.getY() + (graphicInfo.getHeight() / 2) - (image.getHeight() / 2 * scaleFactor));
+            int imageX = (int) (graphicInfo.getX() + (graphicInfo.getWidth() / 2) - ((double) image.getWidth() / 2 * scaleFactor));
+            int imageY = (int) (graphicInfo.getY() + (graphicInfo.getHeight() / 2) - ((double) image.getHeight() / 2 * scaleFactor));
             if (scaleFactor == 1.0 && "timer".equals(eventType)) {
                 // move image one pixel to center timer image
                 imageX++;
@@ -508,10 +508,10 @@ public class DefaultProcessDiagramCanvas {
         }
 
         for (int i=1; i<xPoints.length; i++) {
-            Integer sourceX = xPoints[i - 1];
-            Integer sourceY = yPoints[i - 1];
-            Integer targetX = xPoints[i];
-            Integer targetY = yPoints[i];
+            int sourceX = xPoints[i - 1];
+            int sourceY = yPoints[i - 1];
+            int targetX = xPoints[i];
+            int targetY = yPoints[i];
             Line2D.Double line = new Line2D.Double(sourceX, sourceY, targetX, targetY);
             g.draw(line);
         }
@@ -657,7 +657,7 @@ public class DefaultProcessDiagramCanvas {
         g.drawRect(x, y, width, height);
 
         // Add the name as text, vertical
-        if(name != null && name.length() > 0) {
+        if(name != null && !name.isEmpty()) {
             // Include some padding
             int availableTextSpace = height - 6;
 
@@ -708,7 +708,7 @@ public class DefaultProcessDiagramCanvas {
 
         g.setPaint(originalPaint);
         // text
-        if (name != null && name.length() > 0) {
+        if (name != null && !name.isEmpty()) {
             int boxWidth = width - (2 * TEXT_PADDING);
             int boxHeight = height - 16 - ICON_PADDING - ICON_PADDING - MARKER_WIDTH - 2 - 2;
             int boxX = x + width/2 - boxWidth/2;
@@ -736,12 +736,12 @@ public class DefaultProcessDiagramCanvas {
 
         int currentHeight = 0;
         // Prepare a list of lines of text we'll be drawing
-        List<TextLayout> layouts = new ArrayList<TextLayout>();
+        List<TextLayout> layouts = new ArrayList<>();
         String lastLine = null;
 
         LineBreakMeasurer measurer = new LineBreakMeasurer(characterIterator, g.getFontRenderContext());
 
-        TextLayout layout = null;
+        TextLayout layout;
         while (measurer.getPosition() < characterIterator.getEndIndex() && currentHeight <= boxHeight) {
 
             int previousPosition = measurer.getPosition();
@@ -755,7 +755,7 @@ public class DefaultProcessDiagramCanvas {
                 // The line we're about to add should NOT be added anymore, append three dots to previous one instead
                 // to indicate more text is truncated
                 if (!layouts.isEmpty()) {
-                    layouts.remove(layouts.size() - 1);
+                    layouts.removeLast();
 
                     if(lastLine.length() >= 4) {
                         lastLine = lastLine.substring(0, lastLine.length() - 4) + "...";
@@ -772,16 +772,16 @@ public class DefaultProcessDiagramCanvas {
 
 
         int currentY = y + (centered ? ((boxHeight - currentHeight) /2) : 0);
-        int currentX = 0;
+        int currentX;
 
         // Actually draw the lines
         for(TextLayout textLayout : layouts) {
 
-            currentY += textLayout.getAscent();
+            currentY = (int) (currentY + textLayout.getAscent());
             currentX = x + (centered ? ((boxWidth - ((Double)textLayout.getBounds().getWidth()).intValue()) /2) : 0);
 
             textLayout.draw(g, currentX, currentY);
-            currentY += textLayout.getDescent() + textLayout.getLeading();
+            currentY = (int) (currentY + (textLayout.getDescent() + textLayout.getLeading()));
         }
 
     }
@@ -793,7 +793,7 @@ public class DefaultProcessDiagramCanvas {
         // remove length for "..."
         int maxWidth = width - 10;
 
-        while (fontMetrics.stringWidth(text + "...") > maxWidth && text.length() > 0) {
+        while (fontMetrics.stringWidth(text + "...") > maxWidth && !text.isEmpty()) {
             text = text.substring(0, text.length() - 1);
         }
 
@@ -898,11 +898,7 @@ public class DefaultProcessDiagramCanvas {
                 drawCollapsedMarker(x, y, width, height);
             } else {
                 drawCollapsedMarker(x - MARKER_WIDTH / 2 - 2, y, width, height);
-                if (multiInstanceSequential) {
-                    drawMultiInstanceMarker(true, x + MARKER_WIDTH / 2 + 2, y, width, height);
-                } else {
-                    drawMultiInstanceMarker(false, x + MARKER_WIDTH / 2 + 2, y, width, height);
-                }
+                drawMultiInstanceMarker(multiInstanceSequential, x + MARKER_WIDTH / 2 + 2, y, width, height);
             }
         } else {
             if (multiInstanceSequential) {
@@ -939,9 +935,9 @@ public class DefaultProcessDiagramCanvas {
             // plus inside rhombus
             Stroke orginalStroke = g.getStroke();
             g.setStroke(GATEWAY_TYPE_STROKE);
-            Line2D.Double line = new Line2D.Double(x + 10, y + height / 2, x + width - 10, y + height / 2); // horizontal
+            Line2D.Double line = new Line2D.Double(x + 10, y + (double) height / 2, x + width - 10, y + (double) height / 2); // horizontal
             g.draw(line);
-            line = new Line2D.Double(x + width / 2, y + height - 10, x + width / 2, y + 10); // vertical
+            line = new Line2D.Double(x + (double) width / 2, y + height - 10, x + (double) width / 2, y + 10); // vertical
             g.draw(line);
             g.setStroke(orginalStroke);
         }
@@ -984,7 +980,7 @@ public class DefaultProcessDiagramCanvas {
             // circle inside rhombus
             Stroke orginalStroke = g.getStroke();
             g.setStroke(GATEWAY_TYPE_STROKE);
-            Ellipse2D.Double circle = new Ellipse2D.Double(((width - diameter) / 2) + x, ((height - diameter) / 2) + y, diameter, diameter);
+            Ellipse2D.Double circle = new Ellipse2D.Double(((double) (width - diameter) / 2) + x, ((double) (height - diameter) / 2) + y, diameter, diameter);
             g.draw(circle);
             g.setStroke(orginalStroke);
         }
@@ -1038,11 +1034,11 @@ public class DefaultProcessDiagramCanvas {
 
         if (sequential) {
             g.draw(new Line2D.Double(lineX, lineY, lineX + rectangleWidth, lineY));
-            g.draw(new Line2D.Double(lineX, lineY + rectangleHeight / 2, lineX + rectangleWidth, lineY + rectangleHeight / 2));
+            g.draw(new Line2D.Double(lineX, lineY + (double) rectangleHeight / 2, lineX + rectangleWidth, lineY + (double) rectangleHeight / 2));
             g.draw(new Line2D.Double(lineX, lineY + rectangleHeight, lineX + rectangleWidth, lineY + rectangleHeight));
         } else {
             g.draw(new Line2D.Double(lineX, lineY, lineX, lineY + rectangleHeight));
-            g.draw(new Line2D.Double(lineX + rectangleWidth / 2, lineY, lineX + rectangleWidth / 2, lineY + rectangleHeight));
+            g.draw(new Line2D.Double(lineX + (double) rectangleWidth / 2, lineY, lineX + (double) rectangleWidth / 2, lineY + rectangleHeight));
             g.draw(new Line2D.Double(lineX + rectangleWidth, lineY, lineX + rectangleWidth, lineY + rectangleHeight));
         }
 
@@ -1075,7 +1071,7 @@ public class DefaultProcessDiagramCanvas {
         g.setFont(ANNOTATION_FONT);
 
         Path2D path = new Path2D.Double();
-        x += .5;
+        x = (int) (x + .5);
         int lineLength = 18;
         path.moveTo(x + lineLength, y);
         path.lineTo(x, y);
@@ -1095,7 +1091,7 @@ public class DefaultProcessDiagramCanvas {
         int boxX = x + width/2 - boxWidth/2;
         int boxY = y + height/2 - boxHeight/2;
 
-        if (text != null && text.isEmpty() == false) {
+        if (text != null && !text.isEmpty()) {
             drawMultilineAnnotationText(text, boxX, boxY, boxWidth, boxHeight);
         }
 
@@ -1111,7 +1107,7 @@ public class DefaultProcessDiagramCanvas {
         float interline = 1.0f;
 
         // text
-        if (text != null && text.length()>0) {
+        if (text != null && !text.isEmpty()) {
             Paint originalPaint = g.getPaint();
             Font originalFont = g.getFont();
 
@@ -1131,14 +1127,14 @@ public class DefaultProcessDiagramCanvas {
 
             while (lbm.getPosition() < text.length()) {
                 TextLayout tl = lbm.nextLayout(wrapWidth);
-                textY += tl.getAscent();
+                textY = (int) (textY + tl.getAscent());
                 Rectangle2D bb = tl.getBounds();
                 double tX = graphicInfo.getX();
                 if (centered) {
                     tX += (int) (graphicInfo.getWidth() / 2 - bb.getWidth() / 2);
                 }
                 tl.draw(g, (float) tX, textY);
-                textY += tl.getDescent() + tl.getLeading() + (interline - 1.0f) * tl.getAscent();
+                textY = (int) (textY + (tl.getDescent() + tl.getLeading() + (interline - 1.0f) * tl.getAscent()));
             }
 
             // restore originals
@@ -1160,9 +1156,9 @@ public class DefaultProcessDiagramCanvas {
         Shape shapeFirst = createShape(sourceShapeType, sourceGraphicInfo);
         Shape shapeLast = createShape(targetShapeType, targetGraphicInfo);
 
-        if (graphicInfoList != null && graphicInfoList.size() > 0) {
-            GraphicInfo graphicInfoFirst = graphicInfoList.get(0);
-            GraphicInfo graphicInfoLast = graphicInfoList.get(graphicInfoList.size()-1);
+        if (graphicInfoList != null && !graphicInfoList.isEmpty()) {
+            GraphicInfo graphicInfoFirst = graphicInfoList.getFirst();
+            GraphicInfo graphicInfoLast = graphicInfoList.getLast();
             if (shapeFirst != null) {
                 graphicInfoFirst.setX(shapeFirst.getBounds2D().getCenterX());
                 graphicInfoFirst.setY(shapeFirst.getBounds2D().getCenterY());
@@ -1172,7 +1168,7 @@ public class DefaultProcessDiagramCanvas {
                 graphicInfoLast.setY(shapeLast.getBounds2D().getCenterY());
             }
 
-            Point p = null;
+            Point p;
 
             if (shapeFirst != null) {
                 Line2D.Double lineFirst = new Line2D.Double(graphicInfoFirst.getX(), graphicInfoFirst.getY(), graphicInfoList.get(1).getX(), graphicInfoList.get(1).getY());
@@ -1270,7 +1266,7 @@ public class DefaultProcessDiagramCanvas {
         PathIterator it = shape.getPathIterator(null);
         double[] coords = new double[6];
         double[] pos = new double[2];
-        Line2D.Double l = new Line2D.Double();
+        Line2D.Double l;
         while (!it.isDone()) {
             int type = it.currentSegment(coords);
             switch (type) {

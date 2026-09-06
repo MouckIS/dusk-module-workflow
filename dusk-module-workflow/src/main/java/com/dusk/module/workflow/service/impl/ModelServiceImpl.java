@@ -5,13 +5,14 @@ import com.dusk.common.core.dto.PagedResultDto;
 import com.dusk.common.core.exception.BusinessException;
 import com.dusk.common.core.tenant.TenantContextHolder;
 import com.dusk.common.core.utils.MapperUtil;
+import com.dusk.module.workflow.constant.ModelDataJsonConstants;
 import com.dusk.module.workflow.dto.GetModelsInput;
 import com.dusk.module.workflow.dto.ModelDto;
 import com.dusk.module.workflow.mapper.WorkflowMapper;
 import com.dusk.module.workflow.service.IModelService;
-import com.dusk.module.workflow.constant.ModelDataJsonConstants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -46,7 +47,7 @@ public class ModelServiceImpl implements IModelService {
     private final WorkflowMapper mapper = WorkflowMapper.INSTANCE;
     @Autowired(required = false)
     private RepositoryService repositoryService;
-    @Autowired
+    @Resource
     private ObjectMapper objectMapper;
 
     @SneakyThrows
@@ -189,8 +190,8 @@ public class ModelServiceImpl implements IModelService {
     @SneakyThrows
     public String convertInputStreamToModel(InputStream is) {
         XMLInputFactory xif = XMLInputFactory.newInstance();
-        InputStreamReader isr = null;
-        XMLStreamReader xtr = null;
+        InputStreamReader isr;
+        XMLStreamReader xtr;
         isr = new InputStreamReader(is, StandardCharsets.UTF_8);
         xtr = xif.createXMLStreamReader(isr);
         BpmnModel bpmnModel = new BpmnXMLConverter().convertToBpmnModel(xtr);
