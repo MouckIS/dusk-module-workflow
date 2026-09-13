@@ -11,3 +11,6 @@ dubbo:
   application:
     # todo: 暂时禁用序列化安全检查，后续补充自定义序列化白名单
     serialize-check-status: DISABLE
+    # 元数据优化
+    metadataType: remote
+    register-mode: instance
