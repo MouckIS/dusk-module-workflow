@@ -24,8 +24,8 @@ import com.dusk.module.workflow.mapper.WorkflowMapper;
 import com.dusk.module.workflow.service.IWorkflowService;
 import com.dusk.workflow.dto.*;
 import com.dusk.workflow.enums.AssigneeTypeEnum;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -1315,7 +1315,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
                 String extensions = "";
                 try {
                     extensions = objectMapper.writeValueAsString(extensionsDto);
-                } catch (JsonProcessingException e) {
+                } catch (JacksonException e) {
                     log.error("序列化对象异常", e);
                 }
                 if (StrUtil.isNotEmpty(p.getAssignee()) && addTodo) {
