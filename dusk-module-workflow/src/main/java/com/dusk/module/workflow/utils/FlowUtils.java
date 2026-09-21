@@ -6,7 +6,7 @@ import com.dusk.workflow.IProcessDesHolder;
 import com.dusk.workflow.dto.ProcessDesOutPutDto;
 import com.dusk.workflow.dto.WorkflowTaskDto;
 import com.dusk.workflow.service.IWorkFlowRpcService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.beans.factory.annotation.Autowired;
