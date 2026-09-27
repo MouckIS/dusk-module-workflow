@@ -2,6 +2,7 @@ package com.dusk.module.workflow.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
@@ -263,13 +264,13 @@ public class WorkflowServiceImpl implements IWorkflowService {
                 data.add(dto);
             }
 
-            List<UserNameDto> userNameDtos = userNameUtils.mapList(all, UserNameDto.class);
+            userNameUtils.transfersUserName(all);
             for (ProcessDesOutPutDto item : data) {
                 if (!item.isFinished()) {
-                    List<String> temp = userNameDtos.stream().filter(p -> p.getProcessInstanceId().equals(item.getProcessInstanceId())).map(UserNameDto::getAssigneeName)
+                    List<String> temp = all.stream().filter(p -> p.getProcessInstanceId().equals(item.getProcessInstanceId())).map(UserNameDto::getAssigneeName)
                             .toList();
                     if (!temp.isEmpty()) {
-                        item.setDescription(StrUtil.format("待【{}】{}", ArrayUtil.join(temp.stream().distinct().toArray(), "，"), item.getTaskName()));
+                        item.setDescription(CharSequenceUtil.format("待【{}】{}", ArrayUtil.join(temp.stream().distinct().toArray(), "，"), item.getTaskName()));
                     } else {
                         item.setDescription(item.getTaskName());
                     }
@@ -574,7 +575,8 @@ public class WorkflowServiceImpl implements IWorkflowService {
         List<WorkflowTaskHistoryDto> result =
                 historyService.createHistoricTaskInstanceQuery().processInstanceId(processInstanceId).taskDeleteReasonLike("completed").finished()
                         .list().stream().map(this::getTaskHistory).collect(toList());
-        return userNameUtils.mapList(result, WorkflowTaskHistoryDto.class);
+        userNameUtils.transfersUserName(result);
+        return result;
     }
 
     @Override
@@ -583,7 +585,8 @@ public class WorkflowServiceImpl implements IWorkflowService {
         List<WorkflowTaskHistoryDto> result =
                 historyService.createHistoricTaskInstanceQuery().processInstanceIdIn(processInstanceIds).taskDeleteReasonLike("completed").finished().orderByHistoricTaskInstanceEndTime()
                         .asc().list().stream().map(this::getTaskHistory).collect(toList());
-        return userNameUtils.mapList(result, WorkflowTaskHistoryDto.class);
+        userNameUtils.transfersUserName(result);
+        return result;
     }
 
     @Override
@@ -612,9 +615,9 @@ public class WorkflowServiceImpl implements IWorkflowService {
                 task.setRoleNames(String.join(",", roleNames));
             }
         }
-        List<UserNameDto> userNameDtos = userNameUtils.mapList(userNameList, UserNameDto.class);
+        userNameUtils.transfersUserName(userNameList);
         for (WorkflowTaskDetailDto item : result) {
-            List<String> userNames = userNameDtos.stream().filter(p -> p.getProcessInstanceId().equals(item.getId()))
+            List<String> userNames = userNameList.stream().filter(p -> p.getProcessInstanceId().equals(item.getId()))
                     .map(UserNameDto::getAssigneeName).toList();
 
             if (!userNames.isEmpty()) {
