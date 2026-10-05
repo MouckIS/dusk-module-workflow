@@ -47,6 +47,10 @@
         </dependency>
         <dependency>
             <groupId>com.dusk</groupId>
+            <artifactId>dusk-module-auth-shared</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dusk</groupId>
             <artifactId>dusk-common-rpc</artifactId>
         </dependency>
     </dependencies>

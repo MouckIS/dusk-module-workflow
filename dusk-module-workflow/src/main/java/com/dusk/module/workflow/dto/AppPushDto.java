@@ -37,7 +37,7 @@ public class AppPushDto {
     /**
      * 推送级别 默认是info
      */
-    private NoticationLevel noticationLevel = NoticationLevel.Info;
+    private NoticationLevel noticationLevel = NoticationLevel.INFO;
 
     /**
      * 顶部推送导航跳转参数

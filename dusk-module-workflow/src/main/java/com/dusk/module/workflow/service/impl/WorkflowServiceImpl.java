@@ -12,12 +12,12 @@ import com.dusk.common.core.tenant.TenantContextHolder;
 import com.dusk.common.core.utils.DateUtils;
 import com.dusk.common.core.utils.MapperUtil;
 import com.dusk.common.core.utils.SecurityUtils;
-import com.dusk.common.rpc.auth.UserNameUtils;
-import com.dusk.common.rpc.auth.dto.ToDoDto;
-import com.dusk.common.rpc.auth.dto.UserFullListDto;
-import com.dusk.common.rpc.auth.enums.ToDoTargetType;
-import com.dusk.common.rpc.auth.service.ITodoRpcService;
-import com.dusk.common.rpc.auth.service.IUserRpcService;
+import com.dusk.common.core.utils.UserNameUtils;
+import com.dusk.module.auth.dto.ToDoDto;
+import com.dusk.module.auth.dto.UserFullListDto;
+import com.dusk.module.auth.enums.ToDoTargetType;
+import com.dusk.module.auth.service.ITodoRpcService;
+import com.dusk.module.auth.service.IUserRpcService;
 import com.dusk.module.workflow.constant.FlowableConstants;
 import com.dusk.module.workflow.dto.*;
 import com.dusk.module.workflow.mapper.WorkflowMapper;
@@ -263,7 +263,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
                 data.add(dto);
             }
 
-            List<UserNameDto> userNameDtos = userNameUtils.mapList(all, UserNameDto.class);
+            List<UserNameDto> userNameDtos = userNameUtils.mapList(all, e -> e);
             for (ProcessDesOutPutDto item : data) {
                 if (!item.isFinished()) {
                     List<String> temp = userNameDtos.stream().filter(p -> p.getProcessInstanceId().equals(item.getProcessInstanceId())).map(UserNameDto::getAssigneeName)
@@ -572,18 +572,26 @@ public class WorkflowServiceImpl implements IWorkflowService {
     @Override
     public List<WorkflowTaskHistoryDto> getTaskHistory(String processInstanceId) {
         List<WorkflowTaskHistoryDto> result =
-                historyService.createHistoricTaskInstanceQuery().processInstanceId(processInstanceId).taskDeleteReasonLike("completed").finished()
-                        .list().stream().map(this::getTaskHistory).collect(toList());
-        return userNameUtils.mapList(result, WorkflowTaskHistoryDto.class);
+                new ArrayList<>();
+        for (HistoricTaskInstance historicTaskInstance : historyService.createHistoricTaskInstanceQuery().processInstanceId(processInstanceId).taskDeleteReasonLike("completed").finished()
+                .list()) {
+            WorkflowTaskHistoryDto taskHistory = getTaskHistory(historicTaskInstance);
+            result.add(taskHistory);
+        }
+        return userNameUtils.mapList(result, e -> e);
     }
 
     @Override
     public List<WorkflowTaskHistoryDto> getTaskHistories(List<String> processInstanceIds) {
 
         List<WorkflowTaskHistoryDto> result =
-                historyService.createHistoricTaskInstanceQuery().processInstanceIdIn(processInstanceIds).taskDeleteReasonLike("completed").finished().orderByHistoricTaskInstanceEndTime()
-                        .asc().list().stream().map(this::getTaskHistory).collect(toList());
-        return userNameUtils.mapList(result, WorkflowTaskHistoryDto.class);
+                new ArrayList<>();
+        for (HistoricTaskInstance historicTaskInstance : historyService.createHistoricTaskInstanceQuery().processInstanceIdIn(processInstanceIds).taskDeleteReasonLike("completed").finished().orderByHistoricTaskInstanceEndTime()
+                .asc().list()) {
+            WorkflowTaskHistoryDto taskHistory = getTaskHistory(historicTaskInstance);
+            result.add(taskHistory);
+        }
+        return userNameUtils.mapList(result, e -> e);
     }
 
     @Override
@@ -612,7 +620,7 @@ public class WorkflowServiceImpl implements IWorkflowService {
                 task.setRoleNames(String.join(",", roleNames));
             }
         }
-        List<UserNameDto> userNameDtos = userNameUtils.mapList(userNameList, UserNameDto.class);
+        List<UserNameDto> userNameDtos = userNameUtils.mapList(userNameList, e -> e);
         for (WorkflowTaskDetailDto item : result) {
             List<String> userNames = userNameDtos.stream().filter(p -> p.getProcessInstanceId().equals(item.getId()))
                     .map(UserNameDto::getAssigneeName).toList();
