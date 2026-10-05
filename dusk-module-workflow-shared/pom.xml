@@ -16,6 +16,33 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <!--
+                JDK 23+ 起 javac 不再从 classpath 隐式发现注解处理器，
+                仅把 lombok 放进 <dependencies> 不会生效，必须显式声明 annotationProcessorPaths，
+                否则 lombok 生成的成员（如 @FieldNameConstants 的 Fields）报「找不到符号」。
+                与 dusk-module-metadata-shared 保持一致。
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.16.0</version>
+                <configuration>
+                    <release>${java.version}</release>
+                    <encoding>UTF-8</encoding>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.48</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
     <repositories>
         <repository>
             <id>github-dusk-module-shared-parent</id>
