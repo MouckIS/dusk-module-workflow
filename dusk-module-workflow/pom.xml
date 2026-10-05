@@ -64,6 +64,71 @@
             </snapshots>
         </repository>
     </repositories>
+
+    <build>
+        <plugins>
+            <!--
+                单元测试覆盖率门禁（JaCoCo）。
+                - test 阶段生成 target/site/jacoco 报告
+                - verify 阶段校验 BUNDLE 分支覆盖率不低于 98%
+                  （实测 BRANCH 99.23%(385/388) / LINE 99.35% / INSTRUCTION 99.23% / METHOD 100% / CLASS 100%，
+                   余下 3 个分支为不可达死分支：hasTaskPermission 的 assignees==null、
+                   toTodoList 的 pushDto==null、convertInputStreamToModel 的 getMainProcess()==null）
+                排除项：
+                  * org/activiti/image/impl/**  内嵌的第三方流程图渲染器（AWT 绘图代码，非本仓库业务逻辑）
+                  * DuskWorkflowApplication      Spring Boot 启动类（脚手架）
+                  * **WorkflowMapperImpl         MapStruct 生成的实现类
+            -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco-maven-plugin.version}</version>
+                <configuration>
+                    <excludes>
+                        <exclude>org/activiti/image/impl/**</exclude>
+                        <exclude>com/dusk/module/workflow/DuskWorkflowApplication.class</exclude>
+                        <exclude>**/WorkflowMapperImpl.class</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>check-branch-coverage</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.98</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
     <distributionManagement>
         <repository>
             <id>github-dusk-module-workflow</id>
