@@ -1,37 +1,21 @@
 package com.dusk.module.workflow.service.impl;
 
-import com.dusk.common.model.authentication.LoginUserIdContextHolder;
+import com.dusk.common.core.auth.authentication.LoginUserIdContextHolder;
 import com.dusk.common.core.exception.BusinessException;
-import com.dusk.common.model.model.UserContext;
-import com.dusk.common.model.tenant.TenantContextHolder;
+import com.dusk.common.core.model.UserContext;
+import com.dusk.common.core.tenant.TenantContextHolder;
 import com.dusk.common.core.utils.SecurityUtils;
-import com.dusk.common.rpc.auth.UserNameUtils;
-import com.dusk.common.rpc.auth.dto.UserFullListDto;
-import com.dusk.common.rpc.auth.dto.UserRoleDto;
-import com.dusk.common.rpc.auth.service.ITodoRpcService;
-import com.dusk.common.rpc.auth.service.IUserRpcService;
+import com.dusk.common.core.utils.UserNameUtils;
+import com.dusk.module.auth.dto.UserFullListDto;
+import com.dusk.module.auth.dto.UserRoleDto;
+import com.dusk.module.auth.service.ITodoRpcService;
+import com.dusk.module.auth.service.IUserRpcService;
 import com.dusk.module.workflow.constant.FlowableConstants;
 import com.dusk.module.workflow.dto.UserNameDto;
-import com.dusk.workflow.dto.CompleteTaskByProcessIdInputDto;
-import com.dusk.workflow.dto.CompleteTaskInputDto;
-import com.dusk.workflow.dto.ProcessDesOutPutDto;
-import com.dusk.workflow.dto.StartProcessInputDto;
-import com.dusk.workflow.dto.StartProcessOutDto;
-import com.dusk.workflow.dto.UpdateFlowVariablesInput;
-import com.dusk.workflow.dto.UpdateTaskAssigneeInput;
-import com.dusk.workflow.dto.WorkflowCompleteTaskDto;
-import com.dusk.workflow.dto.WorkflowProcessDto;
-import com.dusk.workflow.dto.WorkflowTaskDetailDto;
-import com.dusk.workflow.dto.WorkflowTaskDto;
-import com.dusk.workflow.dto.WorkflowTaskHistoryDto;
-import tools.jackson.databind.ObjectMapper;
+import com.dusk.workflow.dto.*;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.UserTask;
-import org.flowable.engine.FormService;
-import org.flowable.engine.HistoryService;
-import org.flowable.engine.ProcessEngineConfiguration;
-import org.flowable.engine.RuntimeService;
-import org.flowable.engine.TaskService;
+import org.flowable.engine.*;
 import org.flowable.engine.form.FormProperty;
 import org.flowable.engine.form.TaskFormData;
 import org.flowable.engine.history.HistoricActivityInstance;
@@ -59,33 +43,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  * {@link WorkflowServiceImpl} 单元测试（流程生命周期 / 任务 / 待办同步 / 变量）。
@@ -138,6 +108,17 @@ class WorkflowServiceImplTest {
 
     private static <T> T self(Class<T> type) {
         return Mockito.mock(type, Answers.RETURNS_SELF);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void stubUserNameMap(java.util.List<?> result) {
+        Mockito.doReturn(result).when(userNameUtils).mapList(anyList(), any(Function.class));
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void stubUserNameMapIdentity() {
+        Mockito.doAnswer(invocation -> invocation.getArgument(0))
+                .when(userNameUtils).mapList(anyList(), any(Function.class));
     }
 
     private static UserContext currentUser(Long id) {
@@ -441,7 +422,7 @@ class WorkflowServiceImplTest {
         when(taskService.createTaskQuery()).thenReturn(taskQuery);
         when(taskQuery.list()).thenReturn(List.of());
 
-        when(userNameUtils.mapList(anyList(), eq(UserNameDto.class))).thenReturn(List.of());
+        stubUserNameMap(List.of());
 
         List<ProcessDesOutPutDto> out = workflowService.getProcessDescription(List.of("p1"));
 
@@ -471,7 +452,7 @@ class WorkflowServiceImplTest {
         UserNameDto name = new UserNameDto();
         name.setProcessInstanceId("p1");
         name.setAssigneeName("张三");
-        when(userNameUtils.mapList(anyList(), eq(UserNameDto.class))).thenReturn(List.of(name));
+        stubUserNameMap(List.of(name));
 
         List<ProcessDesOutPutDto> out = workflowService.getProcessDescription(List.of("p1"));
 
@@ -497,7 +478,7 @@ class WorkflowServiceImplTest {
         when(taskQuery.list()).thenReturn(List.of(task));
 
         when(runtimeService.getVariables("p1")).thenReturn(new HashMap<>());
-        when(userNameUtils.mapList(anyList(), eq(UserNameDto.class))).thenReturn(List.of());
+        stubUserNameMap(List.of());
 
         List<ProcessDesOutPutDto> out = workflowService.getProcessDescription(List.of("p1"));
 
@@ -525,7 +506,7 @@ class WorkflowServiceImplTest {
         when(taskQuery.list()).thenReturn(List.of(task));
 
         when(runtimeService.getVariables("p1")).thenReturn(new HashMap<>());
-        when(userNameUtils.mapList(anyList(), eq(UserNameDto.class))).thenReturn(List.of());
+        stubUserNameMap(List.of());
 
         List<ProcessDesOutPutDto> out = workflowService.getProcessDescription(List.of("p1"));
 
@@ -1256,8 +1237,7 @@ class WorkflowServiceImplTest {
         when(historyService.createHistoricVariableInstanceQuery()).thenReturn(variableQuery);
         when(variableQuery.list()).thenReturn(List.of(variable));
 
-        when(userNameUtils.mapList(anyList(), eq(WorkflowTaskHistoryDto.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        stubUserNameMapIdentity();
 
         List<WorkflowTaskHistoryDto> out = workflowService.getTaskHistory("p1");
 
@@ -1285,8 +1265,7 @@ class WorkflowServiceImplTest {
         when(historyService.createHistoricVariableInstanceQuery()).thenReturn(variableQuery);
         when(variableQuery.list()).thenReturn(List.of());
 
-        when(userNameUtils.mapList(anyList(), eq(WorkflowTaskHistoryDto.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        stubUserNameMapIdentity();
 
         List<WorkflowTaskHistoryDto> out = workflowService.getTaskHistory("p1");
 
@@ -1309,8 +1288,7 @@ class WorkflowServiceImplTest {
         HistoricVariableInstanceQuery variableQuery = self(HistoricVariableInstanceQuery.class);
         when(historyService.createHistoricVariableInstanceQuery()).thenReturn(variableQuery);
         when(variableQuery.list()).thenReturn(List.of());
-        when(userNameUtils.mapList(anyList(), eq(WorkflowTaskHistoryDto.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        stubUserNameMapIdentity();
 
         assertThat(workflowService.getTaskHistories(List.of("p1"))).hasSize(1);
     }
@@ -1323,7 +1301,7 @@ class WorkflowServiceImplTest {
         TaskQuery taskQuery = self(TaskQuery.class);
         when(taskService.createTaskQuery()).thenReturn(taskQuery);
         when(taskQuery.list()).thenReturn(List.of());
-        when(userNameUtils.mapList(anyList(), eq(UserNameDto.class))).thenReturn(List.of());
+        stubUserNameMap(List.of());
 
         assertThat(workflowService.getCurrTasksWithAssigneeInfos("p1")).isEmpty();
     }
@@ -1345,7 +1323,7 @@ class WorkflowServiceImplTest {
         UserNameDto name = new UserNameDto();
         name.setProcessInstanceId("t1");
         name.setAssigneeName("张三");
-        when(userNameUtils.mapList(anyList(), eq(UserNameDto.class))).thenReturn(List.of(name));
+        stubUserNameMap(List.of(name));
 
         List<WorkflowTaskDetailDto> out = workflowService.getCurrTasksWithAssigneeInfos("p1");
 
@@ -1367,7 +1345,7 @@ class WorkflowServiceImplTest {
         TaskFormData formDataStub = taskFormData();
         when(formService.getTaskFormData("t1")).thenReturn(formDataStub);
         when(taskService.getIdentityLinksForTask("t1")).thenReturn(List.of());
-        when(userNameUtils.mapList(anyList(), eq(UserNameDto.class))).thenReturn(List.of());
+        stubUserNameMap(List.of());
 
         List<WorkflowTaskDetailDto> out = workflowService.getCurrTasksWithAssigneeInfos("p1");
 

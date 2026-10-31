@@ -64,6 +64,16 @@
 
     <build>
         <plugins>
+            <!-- 单元测试执行：排除需要真实中间件（PostgreSQL/Nacos/Redis）的集成测试 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>**/DuskWorkflowApplicationTests.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
             <!--
                 单元测试覆盖率门禁（JaCoCo）。
                 - test 阶段生成 target/site/jacoco 报告

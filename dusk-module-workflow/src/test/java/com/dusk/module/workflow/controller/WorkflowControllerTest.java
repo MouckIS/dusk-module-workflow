@@ -1,7 +1,7 @@
 package com.dusk.module.workflow.controller;
 
 import com.dusk.common.core.exception.BusinessException;
-import com.dusk.common.model.tenant.TenantContextHolder;
+import com.dusk.common.core.tenant.TenantContextHolder;
 import com.dusk.module.workflow.dto.GetRelateNodeInput;
 import com.dusk.module.workflow.dto.GetRelateTaskInput;
 import com.dusk.module.workflow.dto.RelatedNodeInfo;

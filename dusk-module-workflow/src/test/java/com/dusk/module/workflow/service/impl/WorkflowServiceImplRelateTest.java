@@ -1,32 +1,19 @@
 package com.dusk.module.workflow.service.impl;
 
-import com.dusk.common.model.authentication.LoginUserIdContextHolder;
+import com.dusk.common.core.auth.authentication.LoginUserIdContextHolder;
 import com.dusk.common.core.exception.BusinessException;
-import com.dusk.common.model.tenant.TenantContextHolder;
+import com.dusk.common.core.tenant.TenantContextHolder;
 import com.dusk.common.core.utils.SecurityUtils;
-import com.dusk.common.rpc.auth.UserNameUtils;
-import com.dusk.common.rpc.auth.dto.UserFullListDto;
-import com.dusk.common.rpc.auth.service.ITodoRpcService;
-import com.dusk.common.rpc.auth.service.IUserRpcService;
+import com.dusk.common.core.utils.UserNameUtils;
+import com.dusk.module.auth.dto.UserFullListDto;
+import com.dusk.module.auth.service.ITodoRpcService;
+import com.dusk.module.auth.service.IUserRpcService;
 import com.dusk.module.workflow.constant.FlowableConstants;
 import com.dusk.module.workflow.dto.RelatedNodeInfo;
 import com.dusk.workflow.dto.WorkflowTaskDto;
-import tools.jackson.databind.ObjectMapper;
-import org.flowable.bpmn.model.BpmnModel;
-import org.flowable.bpmn.model.EndEvent;
-import org.flowable.bpmn.model.ExclusiveGateway;
-import org.flowable.bpmn.model.FlowElement;
-import org.flowable.bpmn.model.FlowNode;
-import org.flowable.bpmn.model.ManualTask;
+import org.flowable.bpmn.model.*;
 import org.flowable.bpmn.model.Process;
-import org.flowable.bpmn.model.SequenceFlow;
-import org.flowable.bpmn.model.StartEvent;
-import org.flowable.bpmn.model.UserTask;
-import org.flowable.engine.FormService;
-import org.flowable.engine.HistoryService;
-import org.flowable.engine.ProcessEngineConfiguration;
-import org.flowable.engine.RuntimeService;
-import org.flowable.engine.TaskService;
+import org.flowable.engine.*;
 import org.flowable.engine.history.HistoricActivityInstanceQuery;
 import org.flowable.engine.impl.RepositoryServiceImpl;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
@@ -43,14 +30,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import tools.jackson.databind.ObjectMapper;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -58,9 +42,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * {@link WorkflowServiceImpl} 单元测试（下一节点计算 / 关联节点 / 条件表达式 / 私有分支）。

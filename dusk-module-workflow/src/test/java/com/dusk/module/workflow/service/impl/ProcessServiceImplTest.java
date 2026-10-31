@@ -1,7 +1,7 @@
 package com.dusk.module.workflow.service.impl;
 
-import com.dusk.common.model.dto.PagedResultDto;
-import com.dusk.common.model.tenant.TenantContextHolder;
+import com.dusk.common.core.dto.PagedResultDto;
+import com.dusk.common.core.tenant.TenantContextHolder;
 import com.dusk.module.workflow.dto.GetProcessesInput;
 import com.dusk.module.workflow.dto.ProcessDefDto;
 import org.flowable.engine.RepositoryService;

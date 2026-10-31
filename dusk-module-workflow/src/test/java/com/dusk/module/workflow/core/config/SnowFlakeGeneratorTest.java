@@ -1,6 +1,6 @@
 package com.dusk.module.workflow.core.config;
 
-import com.dusk.common.model.jpa.Sequence;
+import com.dusk.common.core.jpa.Sequence;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

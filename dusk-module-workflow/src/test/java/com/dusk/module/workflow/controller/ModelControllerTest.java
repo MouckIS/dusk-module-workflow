@@ -1,6 +1,6 @@
 package com.dusk.module.workflow.controller;
 
-import com.dusk.common.model.dto.PagedResultDto;
+import com.dusk.common.core.dto.PagedResultDto;
 import com.dusk.module.workflow.dto.GetModelsInput;
 import com.dusk.module.workflow.dto.ModelDto;
 import com.dusk.module.workflow.service.IModelService;
@@ -21,7 +21,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 

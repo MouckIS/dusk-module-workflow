@@ -1,8 +1,8 @@
 package com.dusk.module.workflow.service.impl;
 
-import com.dusk.common.model.dto.PagedAndSortedInputDto;
-import com.dusk.common.model.dto.PagedResultDto;
-import com.dusk.common.model.tenant.TenantContextHolder;
+import com.dusk.common.core.dto.PagedAndSortedInputDto;
+import com.dusk.common.core.dto.PagedResultDto;
+import com.dusk.common.core.tenant.TenantContextHolder;
 import com.dusk.workflow.dto.WorkflowTaskDto;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.engine.HistoryService;
@@ -35,11 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 /**

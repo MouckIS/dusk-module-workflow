@@ -1,7 +1,7 @@
 package com.dusk.module.workflow.controller;
 
-import com.dusk.common.model.dto.PagedAndSortedInputDto;
-import com.dusk.common.model.dto.PagedResultDto;
+import com.dusk.common.core.dto.PagedAndSortedInputDto;
+import com.dusk.common.core.dto.PagedResultDto;
 import com.dusk.module.workflow.service.IActTaskService;
 import com.dusk.workflow.dto.WorkflowTaskDto;
 import jakarta.servlet.ServletOutputStream;

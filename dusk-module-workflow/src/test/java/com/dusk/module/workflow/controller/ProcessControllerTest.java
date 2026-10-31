@@ -1,6 +1,6 @@
 package com.dusk.module.workflow.controller;
 
-import com.dusk.common.model.dto.PagedResultDto;
+import com.dusk.common.core.dto.PagedResultDto;
 import com.dusk.module.workflow.dto.GetProcessesInput;
 import com.dusk.module.workflow.dto.ProcessDefDto;
 import com.dusk.module.workflow.service.IProcessService;
