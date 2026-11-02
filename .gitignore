@@ -28,3 +28,6 @@
 
 ### AI Agent ###
 .workbuddy/
+
+### 禁止提交env文件
+.env

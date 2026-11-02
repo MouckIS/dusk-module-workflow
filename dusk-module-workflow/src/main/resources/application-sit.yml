@@ -27,20 +27,6 @@ spring:
           result-set-log-enabled: false
           statement-executable-sql-log-enable: false
           enabled: true
-
-  cloud:
-    nacos:
-      discovery:
-        server-addr: ${spring.cloud.nacos.server-addr:localhost:8848}
-        username: ${spring.cloud.nacos.username:nacos}
-        password: ${spring.cloud.nacos.password:dusk}
-        namespace: sit
-        group: services
-      config:
-        server-addr: ${NACOS_ADDRESS:localhost:8848}
-        username: ${NACOS_USERNAME:nacos}
-        password: ${NACOS_PASSWORD:dusk}
-        namespace: sit
   rabbitmq:
     is-enabled: ${SPRING_RABBITMQ_ISENABLED:false}
   flyway:
